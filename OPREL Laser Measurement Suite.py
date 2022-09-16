@@ -48,14 +48,46 @@ class MeasSelect():
         self.measure_button.grid(column=2, row=0, rowspan=3, padx=(10,10))
 
     def open_measure_window(self):
-        if 'CW_IV' == self.radiobutton_var.get():
-            top = Toplevel(root)
-            KSM_gui = KeithleySM(top)
+        top = Toplevel(root)
+        if 'CW_LIV' == self.radiobutton_var.get():
+            CWLIV_gui = LIV_CW(top)
+        elif 'CW_IV' == self.radiobutton_var.get():
+            CWIV_gui = IV_CW(top)
+        elif 'CW_LI' == self.radiobutton_var.get():
+            CWLI_gui = LI_CW(top)
+        elif 'Pulse_LIV' == self.radiobutton_var.get():
+            PulseLIV_gui = LIV_Pulse(top)
+        elif 'Pulse_IV' == self.radiobutton_var.get():
+            PulseIV_gui = IV_Pulse(top)
+        elif 'Pulse_LI' == self.radiobutton_var.get():
+            PulseLI_gui = LI_Pulse(top)
 
 
+class LIV_CW():
 
+    def __init__(self, parent):
+        self.master = parent
 
-class KeithleySM():
+        # Assign window title and geometry
+        self.master.title('CW Measurement: L-I-V')
+
+        # Plot frame
+        self.plotFrame = LabelFrame(self.master, text='Plot', padx=5, pady=5)
+        # Display plot frame
+        self.plotFrame.grid(column=0, row=0, rowspan=2)
+
+        self.fig = Figure(figsize=(5, 5), dpi=100)
+
+        y = 0
+
+        self.plot1 = self.fig.add_subplot(111)
+        self.plot1.plot(y)
+
+        self.figCanv = FigureCanvasTkAgg(self.fig, master=self.plotFrame)
+        self.figCanv.draw()
+        self.figCanv.get_tk_widget().grid(column=0, row=0)
+
+class IV_CW():
 
     """
     Function referenced when: "Start" button is pushed
@@ -268,7 +300,7 @@ class KeithleySM():
         self.master = parent
 
         # Assign window title and geometry
-        self.master.title('Keithley 2401 SourceMeter - IV Sweep')
+        self.master.title('CW Measurement: I-V')
 
         # Plot frame
         self.plotFrame = LabelFrame(self.master, text='Plot', padx=5, pady=5)
@@ -417,6 +449,102 @@ class KeithleySM():
         self.keithley1_addr.insert(0, 'GPIB0::1::INSTR')
         self.keithley2_addr.insert(0, 'GPIB0::2::INSTR')
         self.tec_addr.insert(0, 'ASRL3::INSTR')
+
+class LI_CW():
+
+    def __init__(self, parent):
+        self.master = parent
+
+        # Assign window title and geometry
+        self.master.title('CW Measurement: L-I')
+
+        # Plot frame
+        self.plotFrame = LabelFrame(self.master, text='Plot', padx=5, pady=5)
+        # Display plot frame
+        self.plotFrame.grid(column=0, row=0, rowspan=2)
+
+        self.fig = Figure(figsize=(5, 5), dpi=100)
+
+        y = 0
+
+        self.plot1 = self.fig.add_subplot(111)
+        self.plot1.plot(y)
+
+        self.figCanv = FigureCanvasTkAgg(self.fig, master=self.plotFrame)
+        self.figCanv.draw()
+        self.figCanv.get_tk_widget().grid(column=0, row=0)
+
+class LIV_Pulse():
+
+    def __init__(self, parent):
+        self.master = parent
+
+        # Assign window title and geometry
+        self.master.title('Pulse Measurement: L-I-V')
+
+        # Plot frame
+        self.plotFrame = LabelFrame(self.master, text='Plot', padx=5, pady=5)
+        # Display plot frame
+        self.plotFrame.grid(column=0, row=0, rowspan=2)
+
+        self.fig = Figure(figsize=(5, 5), dpi=100)
+
+        y = 0
+
+        self.plot1 = self.fig.add_subplot(111)
+        self.plot1.plot(y)
+
+        self.figCanv = FigureCanvasTkAgg(self.fig, master=self.plotFrame)
+        self.figCanv.draw()
+        self.figCanv.get_tk_widget().grid(column=0, row=0)
+
+class IV_Pulse():
+
+    def __init__(self, parent):
+        self.master = parent
+
+        # Assign window title and geometry
+        self.master.title('Pulse Measurement: I-V')
+
+        # Plot frame
+        self.plotFrame = LabelFrame(self.master, text='Plot', padx=5, pady=5)
+        # Display plot frame
+        self.plotFrame.grid(column=0, row=0, rowspan=2)
+
+        self.fig = Figure(figsize=(5, 5), dpi=100)
+
+        y = 0
+
+        self.plot1 = self.fig.add_subplot(111)
+        self.plot1.plot(y)
+
+        self.figCanv = FigureCanvasTkAgg(self.fig, master=self.plotFrame)
+        self.figCanv.draw()
+        self.figCanv.get_tk_widget().grid(column=0, row=0)
+
+class LI_Pulse():
+
+    def __init__(self, parent):
+        self.master = parent
+
+        # Assign window title and geometry
+        self.master.title('Pulse Measurement: L-I')
+
+        # Plot frame
+        self.plotFrame = LabelFrame(self.master, text='Plot', padx=5, pady=5)
+        # Display plot frame
+        self.plotFrame.grid(column=0, row=0, rowspan=2)
+
+        self.fig = Figure(figsize=(5, 5), dpi=100)
+
+        y = 0
+
+        self.plot1 = self.fig.add_subplot(111)
+        self.plot1.plot(y)
+
+        self.figCanv = FigureCanvasTkAgg(self.fig, master=self.plotFrame)
+        self.figCanv.draw()
+        self.figCanv.get_tk_widget().grid(column=0, row=0)
 
 # On closing, ensure outputs are turned off
 def on_closing():
