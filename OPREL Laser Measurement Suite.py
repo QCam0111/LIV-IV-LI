@@ -198,6 +198,7 @@ class IV_CW():
         ax1.set_title(self.file_name_entry.get(), loc='right')
 
         ax1.plot(self.voltage_array, self.current, '-o')
+        # Adjust plot to eliminate Y-axis label cutoff
         plt.gcf().subplots_adjust(left=0.15)
         self.fig = fig1
 
@@ -217,7 +218,7 @@ class IV_CW():
 
     def set_voltage(self, voltage):
         keithley = rm.open_resource(self.keithley1_addr.get())
-        keithley.delay = 0.1
+        keithley.delay = 0.1    # Necessary for GPIB connection?
         keithley.write("sour:func volt")
         keithley.write("sens:curr:rang:auto on")
         keithley.write("sens:func 'curr'")
