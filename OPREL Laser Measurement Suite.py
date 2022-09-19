@@ -192,9 +192,9 @@ class IV_CW():
             self.figCanv.get_tk_widget().destroy()
 
         fig1, ax1 = plt.subplots()
-        ax1.set_xlabel('V')
-        ax1.set_ylabel('I(A)')
-        ax1.set_title('I vs V', loc='center')
+        ax1.set_xlabel('Voltage (V)')
+        ax1.set_ylabel('Current (A)')
+        ax1.set_title('CW I-V', loc='center')
         ax1.set_title(self.file_name_entry.get(), loc='right')
 
         ax1.plot(self.voltage_array, self.current, '-o')
