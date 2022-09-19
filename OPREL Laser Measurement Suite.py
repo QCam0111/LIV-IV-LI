@@ -198,7 +198,7 @@ class IV_CW():
         ax1.set_title(self.file_name_entry.get(), loc='right')
 
         ax1.plot(self.voltage_array, self.current, '-o')
-
+        plt.gcf().subplots_adjust(left=0.15)
         self.fig = fig1
 
         self.figCanv = FigureCanvasTkAgg(self.fig, master=self.plotFrame)
