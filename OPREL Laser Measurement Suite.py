@@ -458,25 +458,25 @@ class LI_CW():
     """
 
     def start_li_sweep(self):
-        # Connect to Keithley Source Meter
-        self.keithley = rm.open_resource(self.keithleyS_addr.get())
+        # Connect to Keithley for applying CW current
+        self.keithleySource = rm.open_resource(self.keithleyS_addr.get())
 
         # # Enable stop button
         # self.stop_button.config(state=NORMAL)
 
         # Reset GPIB defaults
-        self.keithley.write("*rst; status:preset; *cls")
+        self.keithleySource.write("*rst; status:preset; *cls")
         # Select source function mode as current source
-        self.keithley.write("sour:func curr")
+        self.keithleySource.write("sour:func curr")
         # Set source level to 0A
-        self.keithley.write("sour:curr 0")
+        self.keithleySource.write("sour:curr 0")
         # Set sensor to voltage
-        self.keithley.write("sens:func 'volt'")
+        self.keithleySource.write("sens:func 'volt'")
         # Set voltage compliance
         compliance = float(self.compliance_entry.get())/1000
-        self.keithley.write("sens:volt:prot:lev " + str(compliance))
+        self.keithleySource.write("sens:volt:prot:lev " + str(compliance))
         # Set voltage measure range to auto
-        self.keithley.write("sens:volt:range:auto on ")
+        self.keithleySource.write("sens:volt:range:auto on ")
 
         if 'Lin' == self.radiobutton_var.get():
             # Set up Linear current array
@@ -518,12 +518,12 @@ class LI_CW():
             # Delay time between sweeping
             sleep(0.1)
             # --------source-------
-            b1 = eval(self.keithley.query("read?"))
+            b1 = eval(self.keithleySource.query("read?"))
             self.voltage[i] = b1
 
         # finish reading
         # Turn off output
-        self.keithley.write("outp off")
+        self.keithleySource.write("outp off")
 
         # open file and write in data
         txtDir = self.txt_dir_entry.get()
@@ -852,6 +852,35 @@ class IV_Pulse():
 
 class LI_Pulse():
 
+    def start_li_pulse(self):
+        print('Start')
+
+    """
+    Function referenced when: Creating "Browse" button in the init function for the plot file entry
+    Description: Configure the button as a File Dialog asking for a directory,
+    store that directory string in the entry box
+    """
+
+    def browse_txt_file(self):
+        # Retrieve directory for text file
+        self.txt_dir = FileDialog.askdirectory()
+        # Update entry box to display the directory
+        self.txt_dir_entry.delete(0, END)
+        self.txt_dir_entry.insert(0, self.txt_dir)
+
+    """
+    Function referenced when: Creating "Browse" button in the init function for the plot file entry
+    Description: Configure the button as a File Dialog asking for a directory,
+    store that directory string in the entry box
+    """
+
+    def browse_plot_file(self):
+        # Retrieve directory for plot file
+        self.plot_dir = FileDialog.askdirectory()
+        # Update entry box to display the directory
+        self.plot_dir_entry.delete(0, END)
+        self.plot_dir_entry.insert(0, self.plot_dir)
+
     def __init__(self, parent):
         self.master = parent
 
@@ -873,6 +902,114 @@ class LI_Pulse():
         self.figCanv = FigureCanvasTkAgg(self.fig, master=self.plotFrame)
         self.figCanv.draw()
         self.figCanv.get_tk_widget().grid(column=0, row=0)
+
+        # Pulse settings frame
+        self.pulseFrame = LabelFrame(self.master, text='Pulse Settings')
+        # Display pulse settings frame
+        self.pulseFrame.grid(column=1,row=0, sticky='W', padx=(10,5))
+
+        # Create plot directory label, button, and entry box
+        # Plot File Label
+        self.plot_dir_label = Label(self.pulseFrame, text='Plot file directory:')
+        self.plot_dir_label.grid(column=1, row=0, sticky='W', columnspan=2)
+        # Plot directory Entry Box
+        self.plot_dir_entry = Entry(self.pulseFrame, width=30)
+        self.plot_dir_entry.grid(column=1, row=1, padx=(3, 0), columnspan=2)
+        # Browse button
+        self.plot_dir_file = Button(
+            self.pulseFrame, text='Browse', command=self.browse_plot_file)
+        self.plot_dir_file.grid(column=3, row=1, ipadx=5)
+
+        # Create text directory label, button, and entry box
+        # Text file label
+        self.txt_dir_label = Label(self.pulseFrame, text='Text file directory:')
+        self.txt_dir_label.grid(column=1, row=2, sticky='W', columnspan=2)
+        # Text directory entry box
+        self.txt_dir_entry = Entry(self.pulseFrame, width=30)
+        self.txt_dir_entry.grid(column=1, row=3, padx=(3, 0), columnspan=2)
+        # Browse button
+        self.txt_dir_file = Button(
+            self.pulseFrame, text='Browse', command=self.browse_txt_file)
+        self.txt_dir_file.grid(column=3, row=3, ipadx=5)
+
+        # Create label for file name entry box
+        self.file_name_label = Label(self.pulseFrame, text='File name:')
+        self.file_name_label.grid(column=1, row=4, sticky='W', columnspan=2)
+        # File name entry box
+        self.file_name_entry = Entry(self.pulseFrame, width=30)
+        self.file_name_entry.grid(
+            column=1, row=5, sticky='W', padx=(3, 0), columnspan=3)
+
+        # Step size label
+        self.step_size_label = Label(self.pulseFrame, text='Step size (mV)')
+        self.step_size_label.grid(column=1, row=6)
+        # Step size entry box
+        self.step_size_entry = Entry(self.pulseFrame, width=5)
+        self.step_size_entry.grid(column=1, row=7)
+
+        # Delay label
+        self.delay_label = Label(self.pulseFrame, text='Delay (ms)')
+        self.delay_label.grid(column=2, row=6)
+        # Delay entry box
+        self.delay_entry = Entry(self.pulseFrame, width=5)
+        self.delay_entry.grid(column=2, row=7)
+
+        # Pulse width label
+        self.pulse_width_label = Label(self.pulseFrame, text='Pulse Width (μs)')
+        self.pulse_width_label.grid(column=3, row=6)
+        # Pulse width entry box
+        self.pulse_width_entry = Entry(self.pulseFrame, width=5)
+        self.pulse_width_entry.grid(column=3, row=7)
+
+        # Start voltage label
+        self.start_voltage_label = Label(self.pulseFrame, text='Start Voltage (V)')
+        self.start_voltage_label.grid(column=1, row=8)
+        # Start voltage entry box
+        self.start_voltage_entry = Entry(self.pulseFrame, width=5)
+        self.start_voltage_entry.grid(column=1, row=9)
+
+        # Stop voltage label
+        self.stop_voltage_label = Label(self.pulseFrame, text='Stop Voltage (V)')
+        self.stop_voltage_label.grid(column=2, row=8)
+        # Stop voltage entry box
+        self.stop_voltage_entry = Entry(self.pulseFrame, width=5)
+        self.stop_voltage_entry.grid(column=2, row=9)
+
+        # Frequency label
+        self.frequency_label = Label(self.pulseFrame, text='Frequency (kHz)')
+        self.frequency_label.grid(column=3, row=8)
+        # Frequency entry box
+        self.frequency_entry = Entry(self.pulseFrame, width=5)
+        self.frequency_entry.grid(column=3, row=9)
+
+        # Start Button
+        self.start_button = Button(
+            self.pulseFrame, text='Start', command=self.start_li_pulse)
+        self.start_button.grid(column=2, row=10, ipadx=10, pady=5)
+        # # Stop Button
+        # self.stop_button = Button(
+        #     self.setFrame, text='Stop', state=DISABLED, command=self.stop_pressed)
+        # self.stop_button.grid(column=3, row=11, ipadx=10, pady=5)
+
+        # Device settings frame
+        self.devFrame = LabelFrame(self.master, text='Device Settings')
+        # Display device settings frame
+        self.devFrame.grid(column=1, row=1, sticky='W', padx=(10, 5))
+
+        self.pulse_label = Label(self.devFrame, text='Pulser Address')
+        self.pulse_label.grid(column=0, row=0, sticky='W')
+
+        self.pulse_addr = Entry(self.devFrame)
+        self.pulse_addr.grid(column=0, row=1, padx=5, pady=5, sticky='W')
+
+        self.scope_label = Label(self.devFrame, text='Oscilloscope Address')
+        self.scope_label.grid(column=0, row=2, sticky='W')
+        self.scope_addr = Entry(self.devFrame)
+        self.scope_addr.grid(column=0, row=3, padx=5, pady=5, sticky='W')
+
+        # Default values
+        self.pulse_addr.insert(0, 'GPIB0::1::INSTR')
+        self.scope_addr.insert(0, 'GPIB0::2::INSTR')
 
 # On closing, ensure outputs are turned off
 def on_closing():
