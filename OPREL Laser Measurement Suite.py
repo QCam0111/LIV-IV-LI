@@ -8,7 +8,7 @@ import pyvisa
 # For use when interacting with the temperature controller or oscilloscope
 # from pyvisa.constants import Parity, StopBits, VI_ASRL_FLOW_NONE
 import Tkinter as tk
-from Tkinter import Label, Entry, Button, Radiobutton, LabelFrame, Toplevel, StringVar, IntVar, END, DISABLED, NORMAL
+from Tkinter import Label, Entry, Button, Radiobutton, LabelFrame, Toplevel, OptionMenu, StringVar, IntVar, END, DISABLED, NORMAL
 import tkMessageBox as messagebox
 import tkFileDialog as FileDialog
 from time import sleep
@@ -457,7 +457,7 @@ class LI_CW():
     such as: start current, stop current, step size, etc.
     """
 
-    def start_li_sweep(self):
+    def start_li_cw(self):
         # Connect to Keithley for applying CW current
         self.keithleySource = rm.open_resource(self.keithleyS_addr.get())
 
@@ -492,22 +492,6 @@ class LI_CW():
             current_source_pos = logspace(-4, log10(float(self.stop_current_entry.get())), int(self.num_of_pts_entry.get())/2)
             current_source_neg = -logspace(log10(abs(float(self.start_current_entry.get()))), -4, int(self.num_of_pts_entry.get())/2)
             self.current_array = append(current_source_neg, current_source_pos)
-        elif 'Linlog' == self.radiobutton_var.get():
-            # Set up Linear current array
-            stepSize = round(float(self.step_size_entry.get())/1000, 3)
-            startA = float(self.start_current_entry.get())
-            stopA = float(self.stop_current_entry.get())
-
-            self.current_array = arange(startA, -0.5+stepSize, stepSize)
-            current_linear_pos = arange(0.5+stepSize, stopA+stepSize, stepSize)
-
-            # Log scale
-            current_log_pos = logspace(-4, log10(0.5), int(self.num_of_pts_entry.get())/2)
-            current_log_neg = -logspace(log10(0.5), -4, int(self.num_of_pts_entry.get())/2)
-
-            self.current_array = append(self.current_array, current_log_neg)
-            self.current_array = append(self.current_array, current_log_pos)
-            self.current_array = append(self.current_array, current_linear_pos)
 
         # read
         # Create empty space vector
@@ -613,16 +597,6 @@ class LI_CW():
 
     def log_selected(self):
         self.step_size_entry.config(state=DISABLED)
-        self.num_of_pts_entry.config(state=NORMAL)
-
-    """
-    Function referenced when: Linlog radiobutton is selected
-    Description: When in linear-logarithmic mode, we use both the step size
-    and the number of points for plotting, so enable both entries.
-    """
-
-    def linlog_selected(self):
-        self.step_size_entry.config(state=NORMAL)
         self.num_of_pts_entry.config(state=NORMAL)
 
     """
@@ -763,10 +737,6 @@ class LI_CW():
             self.setFrame, text='Log', variable=self.radiobutton_var, command=self.log_selected, value='Log')
         self.log_radiobutton.grid(column=2, row=10, sticky='W')
 
-        self.linlog_radiobutton = Radiobutton(
-            self.setFrame, text='Lin-log', variable=self.radiobutton_var, command=self.linlog_selected, value='Linlog')
-        self.linlog_radiobutton.grid(column=3, row=10, sticky='W')
-
         # The default setting for radiobutton is set to linear sweep
         self.radiobutton_var.set('Lin')
 
@@ -775,7 +745,7 @@ class LI_CW():
 
         # Start Button
         self.start_button = Button(
-            self.setFrame, text='Start', command=self.start_li_sweep)
+            self.setFrame, text='Start', command=self.start_li_cw)
         self.start_button.grid(column=2, row=11, ipadx=10, pady=5)
         # # Stop Button
         # self.stop_button = Button(
@@ -881,6 +851,12 @@ class LI_Pulse():
         self.plot_dir_entry.delete(0, END)
         self.plot_dir_entry.insert(0, self.plot_dir)
 
+    """
+    Function referenced when: Initializing the application window
+    Description: Creates the base geometry and all widgets on the top level
+    of the application window.
+    """
+
     def __init__(self, parent):
         self.master = parent
 
@@ -962,14 +938,14 @@ class LI_Pulse():
         self.pulse_width_entry.grid(column=3, row=7)
 
         # Start voltage label
-        self.start_voltage_label = Label(self.pulseFrame, text='Start Voltage (V)')
+        self.start_voltage_label = Label(self.pulseFrame, text='Start (V)')
         self.start_voltage_label.grid(column=1, row=8)
         # Start voltage entry box
         self.start_voltage_entry = Entry(self.pulseFrame, width=5)
         self.start_voltage_entry.grid(column=1, row=9)
 
         # Stop voltage label
-        self.stop_voltage_label = Label(self.pulseFrame, text='Stop Voltage (V)')
+        self.stop_voltage_label = Label(self.pulseFrame, text='Stop (V)')
         self.stop_voltage_label.grid(column=2, row=8)
         # Stop voltage entry box
         self.stop_voltage_entry = Entry(self.pulseFrame, width=5)
@@ -998,18 +974,42 @@ class LI_Pulse():
 
         self.pulse_label = Label(self.devFrame, text='Pulser Address')
         self.pulse_label.grid(column=0, row=0, sticky='W')
-
         self.pulse_addr = Entry(self.devFrame)
-        self.pulse_addr.grid(column=0, row=1, padx=5, pady=5, sticky='W')
+        self.pulse_addr.grid(column=0, columnspan=2, row=1, padx=5, pady=5, sticky='W')
 
         self.scope_label = Label(self.devFrame, text='Oscilloscope Address')
         self.scope_label.grid(column=0, row=2, sticky='W')
         self.scope_addr = Entry(self.devFrame)
-        self.scope_addr.grid(column=0, row=3, padx=5, pady=5, sticky='W')
+        self.scope_addr.grid(column=0, columnspan=2, row=3, padx=5, pady=5, sticky='W')
 
         # Default values
         self.pulse_addr.insert(0, 'GPIB0::1::INSTR')
-        self.scope_addr.insert(0, 'GPIB0::2::INSTR')
+        self.scope_addr.insert(0, 'USB0::0x0957::0x17A2::MY51450354::INSTR')
+
+        channels = [1,2,3,4]
+        currNum = StringVar()
+
+        # Set current channel to 1
+        currNum.set('1')
+
+        # Current measurement channel label
+        self.curr_channel_label = Label(self.devFrame, text='Current Channel')
+        self.curr_channel_label.grid(column=0, row=4)
+        # Current measurement channel dropdown
+        self.curr_channel_dropdown = OptionMenu(self.devFrame, currNum, *channels)
+        self.curr_channel_dropdown.grid(column=0, row=5)
+
+        lightNum = StringVar()
+        # Set light channel to 2
+        lightNum.set('2')
+
+        # Light measurement channel label
+        self.light_channel_label = Label(self.devFrame, text='Light Channel')
+        self.light_channel_label.grid(column=1, row=4)
+        # Light measurement channel dropdown
+        self.light_channel_dropdown = OptionMenu(self.devFrame, lightNum, *channels)
+        self.light_channel_dropdown.grid(column=1, row=5)
+
 
 # On closing, ensure outputs are turned off
 def on_closing():
