@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import numpy as np
-from numpy import append, zeros, arange, logspace, flip, log10
+from numpy import append, zeros, arange, logspace, flip, log10, size
 import os
 import pyvisa
 # For use when interacting with the temperature controller or oscilloscope
@@ -972,42 +972,51 @@ class LI_Pulse():
         # Display device settings frame
         self.devFrame.grid(column=1, row=1, sticky='W', padx=(10, 5))
 
+        # Device addresses
+        connected_addresses = list(rm.list_resources())
+
+        if size(connected_addresses) is 0:
+            connected_addresses = ['No devices detected.']
+
+        self.pulse_address = StringVar()
+        self.scope_address = StringVar()
+
+        # Pulser address label
         self.pulse_label = Label(self.devFrame, text='Pulser Address')
         self.pulse_label.grid(column=0, row=0, sticky='W')
-        self.pulse_addr = Entry(self.devFrame)
+        # Pulser address dropdown
+        self.pulse_addr = OptionMenu(self.devFrame, self.pulse_address, *connected_addresses)
         self.pulse_addr.grid(column=0, columnspan=2, row=1, padx=5, pady=5, sticky='W')
 
+        # Oscilloscope address label
         self.scope_label = Label(self.devFrame, text='Oscilloscope Address')
         self.scope_label.grid(column=0, row=2, sticky='W')
-        self.scope_addr = Entry(self.devFrame)
+        # Oscilloscope address dropdown
+        self.scope_addr = OptionMenu(self.devFrame, self.scope_address, *connected_addresses)
         self.scope_addr.grid(column=0, columnspan=2, row=3, padx=5, pady=5, sticky='W')
 
-        # Default values
-        self.pulse_addr.insert(0, 'GPIB0::1::INSTR')
-        self.scope_addr.insert(0, 'USB0::0x0957::0x17A2::MY51450354::INSTR')
-
+        # Oscilloscope channel options
         channels = [1,2,3,4]
-        currNum = StringVar()
+        self.current_channel = IntVar()
+        self.light_channel = IntVar()
 
         # Set current channel to 1
-        currNum.set('1')
+        self.current_channel.set(1)
+        # Set light channel to 2
+        self.light_channel.set(2)
 
         # Current measurement channel label
         self.curr_channel_label = Label(self.devFrame, text='Current Channel')
         self.curr_channel_label.grid(column=0, row=4)
         # Current measurement channel dropdown
-        self.curr_channel_dropdown = OptionMenu(self.devFrame, currNum, *channels)
+        self.curr_channel_dropdown = OptionMenu(self.devFrame, self.current_channel, *channels)
         self.curr_channel_dropdown.grid(column=0, row=5)
-
-        lightNum = StringVar()
-        # Set light channel to 2
-        lightNum.set('2')
 
         # Light measurement channel label
         self.light_channel_label = Label(self.devFrame, text='Light Channel')
         self.light_channel_label.grid(column=1, row=4)
         # Light measurement channel dropdown
-        self.light_channel_dropdown = OptionMenu(self.devFrame, lightNum, *channels)
+        self.light_channel_dropdown = OptionMenu(self.devFrame, self.light_channel, *channels)
         self.light_channel_dropdown.grid(column=1, row=5)
 
 
