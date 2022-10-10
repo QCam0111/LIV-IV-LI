@@ -823,8 +823,36 @@ class IV_Pulse():
 class LI_Pulse():
 
     def start_li_pulse(self):
-        # Convert mV to V
-        self.pulser_step_size = self.step_size_entry.get()/1000
+        # Range of values for vertical scale on oscilloscope
+        scales = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10]
+
+        # Connect to oscilloscope
+        self.scope = rm.open_resource(self.scope_address.get())
+        # Initialize oscilloscope
+        self.scope.write("*RST")
+        self.scope.write("*CLS")
+        self.scope.write(":AUToscale")
+
+        # Connect to AVTECH Pulser
+        self.pulser = rm.open_resource(self.pulse_address.get())
+        # Initialize pulser
+        self.pulser.write("*RST")
+        self.pulser.write("*CLS")
+        self.pulser.write("OUTPut:IMPedance 50")
+        self.pulser.write("SOURce INTernal")
+        self.pulser.write("PULSe:WIDTh %dus" %self.pulse_width_entry.get())
+        self.pulser.write("OUTPut ON")
+
+        # Calculate number of points based on step size
+        voltageSourceValues = makeArray(voltageStep, V_i, V_f)
+
+    def makeArray(interval, start, stop):
+        interval = round(interval, 3)
+        start = interval*round(start/interval)
+        stop = interval*round(stop/interval)
+        nrPts = int((stop - start)/interval + 1)
+        values = [round(start + i*interval,3) for i in range(nrPts)]
+        return values
 
     """
     Function referenced when: Creating "Browse" button in the init function for the plot file entry
