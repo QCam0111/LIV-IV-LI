@@ -81,6 +81,10 @@ def makeArray(interval, start, stop):
     values = [round(start + i*interval,3) for i in range(nrPts)]
     return values
 
+def updateTriggerCursor(pulseAmplitude):
+    new_trigger = pulseAmplitude/2.0
+    scope.write(":TRIGger:LEVel %.6f"%(new_trigger))
+
 #------------------ 2 Set oscilloscope and turn on pulser output --------------------
 
 # This is the main function, which is executed when the start button is clicked
@@ -189,7 +193,10 @@ def Start(btn):
                 scope.write(r'SINGLE;*OPC;:CHANNEL%d:SCALe %.3f'%(channel_voltage.value,float(vertScaleVoltage)))
                 current_ampl_osc = scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%channel_current.value)[0]
                 voltage_ampl_osc = scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%channel_voltage.value)[0]
-                time.sleep(0.75) 
+                time.sleep(0.75)
+                
+            # Update trigger cursor to half of measured current amplitude
+            updateTriggerCursor(current_ampl_osc)
             
             R_S = 50.0; # AVTECH pulser source resistance
             current_ampl_device = 2*current_ampl_osc
