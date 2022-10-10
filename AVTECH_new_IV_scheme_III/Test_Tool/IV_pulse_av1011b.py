@@ -107,10 +107,12 @@ def Start(btn):
 
     # Oscilloscope settings
     scope = rm.open_resource(host+InfiniiumScope_dd.value)
+    scope.write("*RST")
     scope.write("*CLS")
-    scope.write(r'SINGLE;*OPC;:CHANNEL%d:SCALe %.3f' %(channel_current.value, float(current_ch_scale)))
+    scope.write(":AUToscale")
+    # scope.write(r'SINGLE;*OPC;:CHANNEL%d:SCALe %.3f' %(channel_current.value, float(current_ch_scale)))
     scope.write(":CHANnel%d:DISPlay ON" %channel_current.value)
-    scope.write(r'SINGLE;*OPC;:CHANNEL%d:SCALe %.3f' %(channel_voltage.value, float(voltage_ch_scale)))
+    # scope.write(r'SINGLE;*OPC;:CHANNEL%d:SCALe %.3f' %(channel_voltage.value, float(voltage_ch_scale)))
     scope.write(":CHANnel%d:DISPlay ON" %channel_voltage.value)
     
     # Scale indices
@@ -182,18 +184,18 @@ def Start(btn):
             voltage_ampl_osc = scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%channel_voltage.value)[0]
             
             # Adjust vertical scales if necessary
-            while (current_ampl_osc > maxValue):
-                vertScaleCurrent = incrOscVertScale(vertScaleCurrent)
-                scope.write(r'SINGLE;*OPC;:CHANNEL%d:SCALe %.3f'%(channel_current.value,float(vertScaleCurrent)))
-                current_ampl_osc = scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%channel_current.value)[0]
-                voltage_ampl_osc = scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%channel_voltage.value)[0]
-                time.sleep(0.75)
-            while (voltage_ampl_osc > maxValue):
-                vertScaleVoltage = incrOscVertScale(vertScaleVoltage)
-                scope.write(r'SINGLE;*OPC;:CHANNEL%d:SCALe %.3f'%(channel_voltage.value,float(vertScaleVoltage)))
-                current_ampl_osc = scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%channel_current.value)[0]
-                voltage_ampl_osc = scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%channel_voltage.value)[0]
-                time.sleep(0.75)
+            # while (current_ampl_osc > maxValue):
+            #     vertScaleCurrent = incrOscVertScale(vertScaleCurrent)
+            #     scope.write(r'SINGLE;*OPC;:CHANNEL%d:SCALe %.3f'%(channel_current.value,float(vertScaleCurrent)))
+            #     current_ampl_osc = scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%channel_current.value)[0]
+            #     voltage_ampl_osc = scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%channel_voltage.value)[0]
+            #     time.sleep(0.75)
+            # while (voltage_ampl_osc > maxValue):
+            #     vertScaleVoltage = incrOscVertScale(vertScaleVoltage)
+            #     scope.write(r'SINGLE;*OPC;:CHANNEL%d:SCALe %.3f'%(channel_voltage.value,float(vertScaleVoltage)))
+            #     current_ampl_osc = scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%channel_current.value)[0]
+            #     voltage_ampl_osc = scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%channel_voltage.value)[0]
+            #     time.sleep(0.75)
                 
             # Update trigger cursor to half of measured current amplitude
             updateTriggerCursor(current_ampl_osc, scope)
