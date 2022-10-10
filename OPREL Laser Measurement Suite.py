@@ -974,12 +974,17 @@ class LI_Pulse():
 
         # Device addresses
         connected_addresses = list(rm.list_resources())
+        # Pulser and scope variables
+        self.pulse_address = StringVar()
+        self.scope_address = StringVar()
 
+        # If no devices detected
         if size(connected_addresses) is 0:
             connected_addresses = ['No devices detected.']
 
-        self.pulse_address = StringVar()
-        self.scope_address = StringVar()
+        # Set the pulser and scope variables to default values
+        self.pulse_address.set('Choose pulser address.')
+        self.scope_address.set('Choose oscilloscope address.')
 
         # Pulser address label
         self.pulse_label = Label(self.devFrame, text='Pulser Address')
