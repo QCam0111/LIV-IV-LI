@@ -82,8 +82,11 @@ def makeArray(interval, start, stop):
     return values
 
 def updateTriggerCursor(pulseAmplitude, scope):
-    new_trigger = pulseAmplitude/2.0
-    scope.write(":TRIGger:LEVel %.6f"%(new_trigger))
+    new_trigger = 3*pulseAmplitude/4.0
+    if (new_trigger < 0.03):
+        new_trigger = 0.03
+    scope.write(":TRIGger:GLITch:SOURce CHANnel3")
+    scope.write(":TRIGger:GLITch:LEVel %.6f"%(new_trigger))
 
 #------------------ 2 Set oscilloscope and turn on pulser output --------------------
 
@@ -107,9 +110,16 @@ def Start(btn):
 
     # Oscilloscope settings
     scope = rm.open_resource(host+InfiniiumScope_dd.value)
-    scope.write("*RST")
     scope.write("*CLS")
-    scope.write(":AUToscale")
+    scope.write(":CHANnel1:IMPedance FIFTy")
+    scope.write(":CHANnel3:IMPedance FIFTy")
+    # scope.write(":AUToscale")
+    scope.write(":TIMebase:RANGe 2E-6")
+    scope.write(":TRIGger:MODE GLITch")
+    scope.write(":TRIGger:GLITch:SOURce CHANnel3")
+    scope.write(":TRIGger:GLITch:QUALifier RANGe")
+    scope.write(":TRIGger:GLITch:RANGe 4E-7,6E-7")
+    scope.write("TRIGger:GLITch:LEVel 3E-3")
     # scope.write(r'SINGLE;*OPC;:CHANNEL%d:SCALe %.3f' %(channel_current.value, float(current_ch_scale)))
     scope.write(":CHANnel%d:DISPlay ON" %channel_current.value)
     # scope.write(r'SINGLE;*OPC;:CHANNEL%d:SCALe %.3f' %(channel_voltage.value, float(voltage_ch_scale)))
@@ -184,21 +194,21 @@ def Start(btn):
             voltage_ampl_osc = scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%channel_voltage.value)[0]
             
             # Adjust vertical scales if necessary
-            # while (current_ampl_osc > maxValue):
-            #     vertScaleCurrent = incrOscVertScale(vertScaleCurrent)
-            #     scope.write(r'SINGLE;*OPC;:CHANNEL%d:SCALe %.3f'%(channel_current.value,float(vertScaleCurrent)))
-            #     current_ampl_osc = scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%channel_current.value)[0]
-            #     voltage_ampl_osc = scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%channel_voltage.value)[0]
-            #     time.sleep(0.75)
-            # while (voltage_ampl_osc > maxValue):
-            #     vertScaleVoltage = incrOscVertScale(vertScaleVoltage)
-            #     scope.write(r'SINGLE;*OPC;:CHANNEL%d:SCALe %.3f'%(channel_voltage.value,float(vertScaleVoltage)))
-            #     current_ampl_osc = scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%channel_current.value)[0]
-            #     voltage_ampl_osc = scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%channel_voltage.value)[0]
-            #     time.sleep(0.75)
+            while (current_ampl_osc > maxValue):
+                vertScaleCurrent = incrOscVertScale(vertScaleCurrent)
+                scope.write(r'SINGLE;*OPC;:CHANNEL%d:SCALe %.3f'%(channel_current.value,float(vertScaleCurrent)))
+                current_ampl_osc = scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%channel_current.value)[0]
+                voltage_ampl_osc = scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%channel_voltage.value)[0]
+                time.sleep(0.75)
+            while (voltage_ampl_osc > maxValue):
+                vertScaleVoltage = incrOscVertScale(vertScaleVoltage)
+                scope.write(r'SINGLE;*OPC;:CHANNEL%d:SCALe %.3f'%(channel_voltage.value,float(vertScaleVoltage)))
+                current_ampl_osc = scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%channel_current.value)[0]
+                voltage_ampl_osc = scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%channel_voltage.value)[0]
+                time.sleep(0.75)
                 
             # Update trigger cursor to half of measured current amplitude
-            updateTriggerCursor(current_ampl_osc, scope)
+            updateTriggerCursor(voltage_ampl_osc, scope)
             
             R_S = 50.0; # AVTECH pulser source resistance
             current_ampl_device = 2*current_ampl_osc
