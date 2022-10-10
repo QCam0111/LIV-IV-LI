@@ -823,7 +823,8 @@ class IV_Pulse():
 class LI_Pulse():
 
     def start_li_pulse(self):
-        print('Start')
+        # Convert mV to V
+        self.pulser_step_size = self.step_size_entry.get()/1000
 
     """
     Function referenced when: Creating "Browse" button in the init function for the plot file entry
