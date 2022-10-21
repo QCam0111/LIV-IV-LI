@@ -844,15 +844,18 @@ class LI_Pulse():
         self.pulser.write("OUTPut ON")
 
         # Calculate number of points based on step size
-        voltageSourceValues = makeArray(voltageStep, V_i, V_f)
+        voltageSourceValues = np.arange(self.start_voltage_entry.get(), self.stop_voltage_entry.get(), self.step_size_entry.get())
+        # Need clarification on where 100 comes from for commenting/documentation purpsoses
+        maxValue = 100
 
-    def makeArray(interval, start, stop):
-        interval = round(interval, 3)
-        start = interval*round(start/interval)
-        stop = interval*round(stop/interval)
-        nrPts = int((stop - start)/interval + 1)
-        values = [round(start + i*interval,3) for i in range(nrPts)]
-        return values
+        for V_s in voltageSourceValues:
+            
+            # Handle glitch issues (still need to test 60V glitch range)
+            if (V_s > 21.3 and V_s < 21.9) or (V_s > 7 and V_s < 7.5) or (V_s > 60 and V_s < 65):
+                self.pulser.write("OUTPut off")
+                self.pulser.write("VOLT %.3f" %V_s)
+                sleep(1)
+
 
     """
     Function referenced when: Creating "Browse" button in the init function for the plot file entry
