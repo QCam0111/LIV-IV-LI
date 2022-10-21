@@ -57,6 +57,10 @@ trial = 1
 device_no_t = ipywidgets.IntText(description='device_no:',value=device_no)
 trial_t = ipywidgets.IntText(description='trial:',value=trial)
 
+# Comparison variables for data validity assurance
+prev_current_amplitude = 0
+prev_voltage_amplitude = 0
+
 # A function to adjust an oscilloscope's waveform's vertical scale
 def incrOscVertScale(currentScale):
     scaleValues = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10] # Range of values for vertical scale on oscilloscope
@@ -190,8 +194,10 @@ def Start(btn):
 
             # Read current amplitude from oscilloscope; multiply by 2 to use 50-ohms channel
             current_ampl_osc = scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%channel_current.value)[0]
+            prev_current_amplitude = current_ampl_osc
             # Read photodetector output
             voltage_ampl_osc = scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%channel_voltage.value)[0]
+            prev_voltage_amplitude = voltage_ampl_oscd
             
             # Adjust vertical scales if necessary
             while (current_ampl_osc > maxValue):
