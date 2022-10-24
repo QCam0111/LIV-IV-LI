@@ -11,7 +11,8 @@ import Tkinter as tk
 from Tkinter import Label, Entry, Button, Radiobutton, LabelFrame, Toplevel, OptionMenu, StringVar, IntVar, END, DISABLED, NORMAL
 import tkMessageBox as messagebox
 import tkFileDialog as FileDialog
-from time import sleep
+from time import sleep, strftime
+import shutil
 
 rm = pyvisa.ResourceManager()
 
@@ -831,7 +832,19 @@ class LI_Pulse():
         # Initialize oscilloscope
         self.scope.write("*RST")
         self.scope.write("*CLS")
-        self.scope.write(":AUToscale")
+        self.scope.write(":CHANnel%d:IMPedance FIFTy" %self.current_channel)
+        self.scope.write(":CHANnel%d:IMPedance FIFTy" %self.light_channel)
+        # self.scope.write(":AUToscale")
+        self.scope.write(":TIMebase:RANGe 2E-6")
+        self.scope.write(":TRIGger:MODE GLITch")
+        self.scope.write(":TRIGger:GLITch:SOURce CHANnel3")
+        self.scope.write(":TRIGger:GLITch:QUALifier RANGe")
+        self.scope.write(":TRIGger:GLITch:RANGe 4E-7,6E-7")
+        self.scope.write("TRIGger:GLITch:LEVel 3E-3")
+        # self.scope.write(r'SINGLE;*OPC;:CHANNEL%d:SCALe %.3f' %(channel_current.value, float(current_ch_scale)))
+        self.scope.write(":CHANnel%d:DISPlay ON" %self.current_channel)
+        # self.scope.write(r'SINGLE;*OPC;:CHANNEL%d:SCALe %.3f' %(channel_voltage.value, float(voltage_ch_scale)))
+        self.scope.write(":CHANnel%d:DISPlay ON" %self.light_channel)
 
         # Connect to AVTECH Pulser
         self.pulser = rm.open_resource(self.pulse_address.get())
@@ -845,17 +858,136 @@ class LI_Pulse():
 
         # Calculate number of points based on step size
         voltageSourceValues = np.arange(self.start_voltage_entry.get(), self.stop_voltage_entry.get(), self.step_size_entry.get())
+        
         # Need clarification on where 100 comes from for commenting/documentation purpsoses
         maxValue = 100
 
+        # Lists for data values
+        currentData = list() # To be plotted on y-axis
+        voltageData = list() # To be plotted on x-axis
+
+        i = 1
+
+        voltageData.append(0)
+        currentData.append(0)
+
         for V_s in voltageSourceValues:
             
-            # Handle glitch issues (still need to test 60V glitch range)
-            if (V_s > 21.3 and V_s < 21.9) or (V_s > 7 and V_s < 7.5) or (V_s > 60 and V_s < 65):
-                self.pulser.write("OUTPut off")
+            # Handle glitch issues
+            if (V_s > 21.3 and V_s < 21.9) or (V_s > 7 and V_s < 7.5) or (V_s > 68 and V_s < 68.5):
+                self.pulser.write("OUTPut OFF")
                 self.pulser.write("VOLT %.3f" %V_s)
                 sleep(1)
+            else:
+                self.pulser.write("VOLT %.3f" %(V_s))
+                self.pulser.write("OUTPut ON")
+                sleep(0.1)
+                # Read current amplitude from oscilloscope; multiply by 2 to use 50-ohms channel
+                current_ampl_osc = self.scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%self.current_channel)[0]
+                prev_current_amplitude = current_ampl_osc
+                # Read photodetector output
+                voltage_ampl_osc = self.scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%self.light_channel)[0]
+                prev_voltage_amplitude = voltage_ampl_osc
+                # Adjust vertical scales if necessary
+                while (current_ampl_osc > maxValue):
+                    vertScaleCurrent = incrOscVertScale(vertScaleCurrent)
+                    self.scope.write(r'SINGLE;*OPC;:CHANNEL%d:SCALe %.3f'%(self.current_channel,float(vertScaleCurrent)))
+                    current_ampl_osc = self.scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%self.current_channel)[0]
+                    voltage_ampl_osc = self.scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%self.light_channel)[0]
+                    sleep(0.75)
+                while (voltage_ampl_osc > maxValue):
+                    vertScaleVoltage = incrOscVertScale(vertScaleVoltage)
+                    self.scope.write(r'SINGLE;*OPC;:CHANNEL%d:SCALe %.3f'%(self.light_channel,float(vertScaleVoltage)))
+                    current_ampl_osc = self.scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%self.current_channel)[0]
+                    voltage_ampl_osc = self.scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%self.light_channel)[0]
+                    sleep(0.75)
 
+                # Update trigger cursor to half of measured current amplitude
+                updateTriggerCursor(voltage_ampl_osc, self.scope)
+                R_S = 50.0; # AVTECH pulser source resistance
+                current_ampl_device = 2*current_ampl_osc
+                voltage_ampl_device = voltage_ampl_osc - R_S*current_ampl_device
+
+                voltageData.append(voltage_ampl_device)
+                currentData.append(current_ampl_device)
+
+                i = i + 1
+        # Convert current and voltage readings to mA and mV values
+        currentData[:] = [x*1000 for x in currentData]
+        voltageData[:] = [x*1000 for x in voltageData]
+
+        # Turn off the pulser, need clarification on the latter two arguments
+        self.pulse.write("OUTPut OFF")
+        self.pulser.write("*CLS;:STOP")
+        self.scope.write(":STOP;*OPC?")
+
+        try:
+            if not os.path.exists(self.txt_dir_entry.get()):
+                os.makedirs(self.txt_dir_entry.get())
+        except:
+            print('Error: Creating directory: '+self.txt_dir_entry.get())
+            
+        filename = strftime("%Y%m%d_%HH%MM") + '.txt'
+        filesave1 = os.path.join(self.txt_dir_entry.get(),filename)
+        filesave2 = os.path.join(self.txt_dir_entry.get(),'no'+ self.file_name_entry.get()+'.txt')
+        i = 1
+
+        while(os.path.exists(filesave2)):
+            filesave2 = os.path.join(self.txt_dir_entry.get(),'no'+ str(self.file_name_entry.get()+i)+'.txt')
+            i = i+1
+        
+        f = open(filesave2,'w+')
+        f.writelines('\n')
+        f.writelines('Current (mA), Voltage (mV)\n')
+        for i in range(0,len(currentData)):
+            f.writelines(str(currentData[i]))
+            f.writelines(' ')
+            f.writelines(str(voltageData[i]))
+            f.writelines('\r\n')
+        f.close()
+        print(filesave2)
+        print(filesave1)
+        shutil.copy(filesave2,filesave1)
+
+        #------------------ Plot measured characteristic ----------------------------------
+        
+        fig, ax1 = plt.subplots()
+        ax1.set_xlabel('Measured device voltage (mV)')
+        ax1.set_ylabel('Measured device current (mA)')
+        ax1.plot(voltageData, currentData, color='blue', label='I-V characteristic')
+        ax1.legend(loc='upper left')
+        
+        plt.show()
+        
+        try: 
+            if not os.path.exists(self.plot_dir_entry.get()):
+                os.makedirs(self.plot_dir_entry.get())
+        except:
+            print('Error: Creating directory: ' + self.plot_dir_entry.get())
+        
+    """
+    Function referenced when: 
+    Description: 
+    """
+
+    def updateTriggerCursor(pulseAmplitude, scope):
+        new_trigger = 3*pulseAmplitude/4.0
+        if (new_trigger < 0.03):
+            new_trigger = 0.03
+        scope.write(":TRIGger:GLITch:SOURce CHANnel3")
+        scope.write(":TRIGger:GLITch:LEVel %.6f"%(new_trigger))
+
+    """
+    Function referenced when: 
+    Description: 
+    """
+
+    def incrOscVertScale(currentScale):
+        scaleValues = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10] # Range of values for vertical scale on oscilloscope
+        scaleIndex = scaleValues.index(currentScale)
+        scaleIndex = scaleIndex + 1
+        newScale = scaleValues[scaleIndex]
+        return newScale
 
     """
     Function referenced when: Creating "Browse" button in the init function for the plot file entry
