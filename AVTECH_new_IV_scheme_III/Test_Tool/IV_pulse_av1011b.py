@@ -197,7 +197,7 @@ def Start(btn):
             prev_current_amplitude = current_ampl_osc
             # Read photodetector output
             voltage_ampl_osc = scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%channel_voltage.value)[0]
-            prev_voltage_amplitude = voltage_ampl_oscd
+            prev_voltage_amplitude = voltage_ampl_osc
             
             # Adjust vertical scales if necessary
             while (current_ampl_osc > maxValue):

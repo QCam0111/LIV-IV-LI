@@ -832,8 +832,8 @@ class LI_Pulse():
         # Initialize oscilloscope
         self.scope.write("*RST")
         self.scope.write("*CLS")
-        self.scope.write(":CHANnel%d:IMPedance FIFTy" %self.current_channel)
-        self.scope.write(":CHANnel%d:IMPedance FIFTy" %self.light_channel)
+        self.scope.write(":CHANnel%d:IMPedance FIFTy" %self.current_channel.get())
+        self.scope.write(":CHANnel%d:IMPedance FIFTy" %self.light_channel.get())
         # self.scope.write(":AUToscale")
         self.scope.write(":TIMebase:RANGe 2E-6")
         self.scope.write(":TRIGger:MODE GLITch")
@@ -842,9 +842,9 @@ class LI_Pulse():
         self.scope.write(":TRIGger:GLITch:RANGe 4E-7,6E-7")
         self.scope.write("TRIGger:GLITch:LEVel 3E-3")
         # self.scope.write(r'SINGLE;*OPC;:CHANNEL%d:SCALe %.3f' %(channel_current.value, float(current_ch_scale)))
-        self.scope.write(":CHANnel%d:DISPlay ON" %self.current_channel)
+        self.scope.write(":CHANnel%d:DISPlay ON" %self.current_channel.get())
         # self.scope.write(r'SINGLE;*OPC;:CHANNEL%d:SCALe %.3f' %(channel_voltage.value, float(voltage_ch_scale)))
-        self.scope.write(":CHANnel%d:DISPlay ON" %self.light_channel)
+        self.scope.write(":CHANnel%d:DISPlay ON" %self.light_channel.get())
 
         # Connect to AVTECH Pulser
         self.pulser = rm.open_resource(self.pulse_address.get())
@@ -883,23 +883,23 @@ class LI_Pulse():
                 self.pulser.write("OUTPut ON")
                 sleep(0.1)
                 # Read current amplitude from oscilloscope; multiply by 2 to use 50-ohms channel
-                current_ampl_osc = self.scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%self.current_channel)[0]
+                current_ampl_osc = self.scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%self.current_channel.get())[0]
                 prev_current_amplitude = current_ampl_osc
                 # Read photodetector output
-                voltage_ampl_osc = self.scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%self.light_channel)[0]
+                voltage_ampl_osc = self.scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%self.light_channel.get())[0]
                 prev_voltage_amplitude = voltage_ampl_osc
                 # Adjust vertical scales if necessary
                 while (current_ampl_osc > maxValue):
                     vertScaleCurrent = incrOscVertScale(vertScaleCurrent)
-                    self.scope.write(r'SINGLE;*OPC;:CHANNEL%d:SCALe %.3f'%(self.current_channel,float(vertScaleCurrent)))
-                    current_ampl_osc = self.scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%self.current_channel)[0]
-                    voltage_ampl_osc = self.scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%self.light_channel)[0]
+                    self.scope.write(r'SINGLE;*OPC;:CHANNEL%d:SCALe %.3f'%(self.current_channel.get(),float(vertScaleCurrent)))
+                    current_ampl_osc = self.scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%self.current_channel.get())[0]
+                    voltage_ampl_osc = self.scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%self.light_channel.get())[0]
                     sleep(0.75)
                 while (voltage_ampl_osc > maxValue):
                     vertScaleVoltage = incrOscVertScale(vertScaleVoltage)
-                    self.scope.write(r'SINGLE;*OPC;:CHANNEL%d:SCALe %.3f'%(self.light_channel,float(vertScaleVoltage)))
-                    current_ampl_osc = self.scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%self.current_channel)[0]
-                    voltage_ampl_osc = self.scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%self.light_channel)[0]
+                    self.scope.write(r'SINGLE;*OPC;:CHANNEL%d:SCALe %.3f'%(self.light_channel.get(),float(vertScaleVoltage)))
+                    current_ampl_osc = self.scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%self.current_channel.get())[0]
+                    voltage_ampl_osc = self.scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%self.light_channel.get())[0]
                     sleep(0.75)
 
                 # Update trigger cursor to half of measured current amplitude
@@ -1017,8 +1017,7 @@ class LI_Pulse():
 
     """
     Function referenced when: Initializing the application window
-    Description: Creates the base geometry and all widgets on the top level
-    of the application window.
+    Description: Creates the base geometry and all top-level widgets of the application window.
     """
 
     def __init__(self, parent):
