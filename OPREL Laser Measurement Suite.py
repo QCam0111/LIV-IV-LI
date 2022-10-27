@@ -837,14 +837,27 @@ class LI_Pulse():
         # self.scope.write(":AUToscale")
         self.scope.write(":TIMebase:RANGe 2E-6")
         self.scope.write(":TRIGger:MODE GLITch")
-        self.scope.write(":TRIGger:GLITch:SOURce CHANnel3")
+        self.scope.write(":TRIGger:GLITch:SOURce CHANnel%d" %self.current_channel.get())
         self.scope.write(":TRIGger:GLITch:QUALifier RANGe")
         self.scope.write(":TRIGger:GLITch:RANGe 4E-7,6E-7")
-        self.scope.write("TRIGger:GLITch:LEVel 3E-3")
-        # self.scope.write(r'SINGLE;*OPC;:CHANNEL%d:SCALe %.3f' %(channel_current.value, float(current_ch_scale)))
+        self.scope.write("TRIGger:GLITch:LEVel 1E-3")
+
+        # Channel scales - set each channel to 1mV/div to start
+        vertScaleCurrent = 0.001
+        vertScaleVoltage = 0.001
+
+        self.scope.write(":CHANNEL%d:SCALe %.3f" %(self.current_channel.get(), vertScaleCurrent))
         self.scope.write(":CHANnel%d:DISPlay ON" %self.current_channel.get())
-        # self.scope.write(r'SINGLE;*OPC;:CHANNEL%d:SCALe %.3f' %(channel_voltage.value, float(voltage_ch_scale)))
+        self.scope.write(":CHANNEL%d:SCALe %.3f" %(self.light_channel.get(), vertScaleVoltage))
         self.scope.write(":CHANnel%d:DISPlay ON" %self.light_channel.get())
+
+        # Move each signal down two divisions for a better view on the screen
+        self.scope.write(":CHANnel%d:OFFset %.3fV" %(self.current_channel.get(),2*vertScaleCurrent))
+        self.scope.write(":CHANnel%d:OFFset %.3fV" %(self.light_channel.get(),2*vertScaleVoltage))
+
+        # Total mV based on 6 divisions to top of display
+        totalDisplayCurrent = 6*vertScaleCurrent
+        totalDisplayVoltage = 6*vertScaleVoltage
 
         # Connect to AVTECH Pulser
         self.pulser = rm.open_resource(self.pulse_address.get())
@@ -853,14 +866,16 @@ class LI_Pulse():
         self.pulser.write("*CLS")
         self.pulser.write("OUTPut:IMPedance 50")
         self.pulser.write("SOURce INTernal")
-        self.pulser.write("PULSe:WIDTh %dus" %self.pulse_width_entry.get())
+        self.pulser.write("PULSe:WIDTh " + self.pulse_width_entry.get() + "us")
+        self.pulser.write("FREQuency " + self.frequency_entry.get() + "kHz")
         self.pulser.write("OUTPut ON")
 
         # Calculate number of points based on step size
-        voltageSourceValues = np.arange(self.start_voltage_entry.get(), self.stop_voltage_entry.get(), self.step_size_entry.get())
-        
-        # Need clarification on where 100 comes from for commenting/documentation purpsoses
-        maxValue = 100
+        voltageRangeStart = float(self.start_voltage_entry.get())
+        voltageRangeStop = float(self.stop_voltage_entry.get()) + float(self.step_size_entry.get())/1000
+        voltageRangeStep = float(self.step_size_entry.get())/1000
+
+        voltageSourceValues = np.arange(voltageRangeStart, voltageRangeStop, voltageRangeStep)
 
         # Lists for data values
         currentData = list() # To be plotted on y-axis
@@ -872,9 +887,9 @@ class LI_Pulse():
         currentData.append(0)
 
         for V_s in voltageSourceValues:
-            
+             
             # Handle glitch issues
-            if (V_s > 21.3 and V_s < 21.9) or (V_s > 7 and V_s < 7.5) or (V_s > 68 and V_s < 68.5):
+            if (V_s > 7 and V_s < 7.5) or (V_s > 21.3 and V_s < 21.9) or (V_s > 68 and V_s < 68.5):
                 self.pulser.write("OUTPut OFF")
                 self.pulser.write("VOLT %.3f" %V_s)
                 sleep(1)
@@ -883,30 +898,39 @@ class LI_Pulse():
                 self.pulser.write("OUTPut ON")
                 sleep(0.1)
                 # Read current amplitude from oscilloscope; multiply by 2 to use 50-ohms channel
-                current_ampl_osc = self.scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%self.current_channel.get())[0]
+                current_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" %self.current_channel.get())[0]
                 prev_current_amplitude = current_ampl_osc
                 # Read photodetector output
-                voltage_ampl_osc = self.scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%self.light_channel.get())[0]
+                voltage_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" %self.light_channel.get())[0]
                 prev_voltage_amplitude = voltage_ampl_osc
-                # Adjust vertical scales if necessary
-                while (current_ampl_osc > maxValue):
-                    vertScaleCurrent = incrOscVertScale(vertScaleCurrent)
-                    self.scope.write(r'SINGLE;*OPC;:CHANNEL%d:SCALe %.3f'%(self.current_channel.get(),float(vertScaleCurrent)))
-                    current_ampl_osc = self.scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%self.current_channel.get())[0]
-                    voltage_ampl_osc = self.scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%self.light_channel.get())[0]
+                # Adjust vertical scales if measured amplitude reaches top of screen (99% of display)
+                # print("99 percent current value: ")
+                # print(0.99*totalDisplayCurrent)
+                # print("99 percent light value: ")
+                # print(0.99*totalDisplayVoltage)
+                # print("Measured current: ")
+                # print(current_ampl_osc)
+                # print("Measured light: ")
+                # print(voltage_ampl_osc)
+                if (current_ampl_osc > 0.99*totalDisplayCurrent):
+                    vertScaleCurrent = self.incrOscVertScale(vertScaleCurrent)
+                    totalDisplayCurrent = 6*vertScaleCurrent
+                    self.scope.write(":CHANNEL%d:SCALe %.3f" %(self.current_channel.get(),float(vertScaleCurrent)))
+                    current_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" %self.current_channel.get())[0]
+                    voltage_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" %self.light_channel.get())[0]
                     sleep(0.75)
-                while (voltage_ampl_osc > maxValue):
-                    vertScaleVoltage = incrOscVertScale(vertScaleVoltage)
-                    self.scope.write(r'SINGLE;*OPC;:CHANNEL%d:SCALe %.3f'%(self.light_channel.get(),float(vertScaleVoltage)))
-                    current_ampl_osc = self.scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%self.current_channel.get())[0]
-                    voltage_ampl_osc = self.scope.query_ascii_values(r'SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d;'%self.light_channel.get())[0]
+                if (voltage_ampl_osc > 0.99*totalDisplayVoltage):
+                    vertScaleVoltage = self.incrOscVertScale(vertScaleVoltage)
+                    totalDisplayVoltage = 6*vertScaleVoltage
+                    self.scope.write(":CHANNEL%d:SCALe %.3f" %(self.light_channel.get(),float(vertScaleVoltage)))
+                    current_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" %self.current_channel.get())[0]
+                    voltage_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" %self.light_channel.get())[0]
                     sleep(0.75)
-
                 # Update trigger cursor to half of measured current amplitude
-                updateTriggerCursor(voltage_ampl_osc, self.scope)
+                self.updateTriggerCursor(current_ampl_osc, self.scope, vertScaleCurrent)
                 R_S = 50.0; # AVTECH pulser source resistance
                 current_ampl_device = 2*current_ampl_osc
-                voltage_ampl_device = voltage_ampl_osc - R_S*current_ampl_device
+                voltage_ampl_device = voltage_ampl_osc
 
                 voltageData.append(voltage_ampl_device)
                 currentData.append(current_ampl_device)
@@ -916,10 +940,11 @@ class LI_Pulse():
         currentData[:] = [x*1000 for x in currentData]
         voltageData[:] = [x*1000 for x in voltageData]
 
-        # Turn off the pulser, need clarification on the latter two arguments
-        self.pulse.write("OUTPut OFF")
-        self.pulser.write("*CLS;:STOP")
-        self.scope.write(":STOP;*OPC?")
+        # Turn off the pulser, and clear event registers
+        self.pulser.write("OUTPut OFF")
+        self.pulser.write("*CLS")
+        # Stop acquisition on oscilloscope
+        self.scope.write(":STOP")
 
         try:
             if not os.path.exists(self.txt_dir_entry.get()):
@@ -938,7 +963,7 @@ class LI_Pulse():
         
         f = open(filesave2,'w+')
         f.writelines('\n')
-        f.writelines('Current (mA), Voltage (mV)\n')
+        f.writelines('Current (mA), Output Power (mW)\n')
         for i in range(0,len(currentData)):
             f.writelines(str(currentData[i]))
             f.writelines(' ')
@@ -952,9 +977,9 @@ class LI_Pulse():
         #------------------ Plot measured characteristic ----------------------------------
         
         fig, ax1 = plt.subplots()
-        ax1.set_xlabel('Measured device voltage (mV)')
-        ax1.set_ylabel('Measured device current (mA)')
-        ax1.plot(voltageData, currentData, color='blue', label='I-V characteristic')
+        ax1.set_xlabel('Measured device current (mA)')
+        ax1.set_ylabel('Measured device light output power (mW)')
+        ax1.plot(currentData, voltageData, color='blue', label='L-I Characteristic')
         ax1.legend(loc='upper left')
         
         plt.show()
@@ -970,11 +995,10 @@ class LI_Pulse():
     Description: 
     """
 
-    def updateTriggerCursor(pulseAmplitude, scope):
+    def updateTriggerCursor(self, pulseAmplitude, scope, presentScale):
         new_trigger = 3*pulseAmplitude/4.0
-        if (new_trigger < 0.03):
-            new_trigger = 0.03
-        scope.write(":TRIGger:GLITch:SOURce CHANnel3")
+        if (new_trigger < presentScale):
+            new_trigger = presentScale
         scope.write(":TRIGger:GLITch:LEVel %.6f"%(new_trigger))
 
     """
@@ -982,8 +1006,9 @@ class LI_Pulse():
     Description: 
     """
 
-    def incrOscVertScale(currentScale):
-        scaleValues = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10] # Range of values for vertical scale on oscilloscope
+    def incrOscVertScale(self, currentScale):
+        # Range of values for vertical scale on oscilloscope
+        scaleValues = [0.001, 0.002, 0.005, 0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10]
         scaleIndex = scaleValues.index(currentScale)
         scaleIndex = scaleIndex + 1
         newScale = scaleValues[scaleIndex]
