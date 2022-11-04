@@ -22,47 +22,77 @@ class MeasSelect():
         self.master = parent
 
         # Assign window title
-        self.master.title('Measurement Selection')
+        self.master.title('Laser Diode Measurement Selection')
 
         # Create selection buttons
-        self.radiobutton_var = StringVar()
+        self.selectedMeasurement = StringVar()
 
-        # Pulsed button selections
-        self.pulseLIV_radiobutton = Radiobutton(self.master, text='Pulsed L-I-V', variable=self.radiobutton_var,value='Pulse_LIV')
-        self.pulseLIV_radiobutton.grid(column=0, row=0,sticky='W')
-        self.pulseIV_radiobutton = Radiobutton(self.master, text='Pulsed I-V', variable=self.radiobutton_var,value='Pulse_IV')
-        self.pulseIV_radiobutton.grid(column=0, row=1,sticky='W')
-        self.pulseLI_radiobutton = Radiobutton(self.master, text='Pulsed L-I', variable=self.radiobutton_var,value='Pulse_LI')
-        self.pulseLI_radiobutton.grid(column=0, row=2,sticky='W')
-        # CW button selections
-        self.cwLIV_radiobutton = Radiobutton(self.master, text='CW L-I-V', variable=self.radiobutton_var,value='CW_LIV')
-        self.cwLIV_radiobutton.grid(column=1, row=0, padx=(10,0), sticky='W')
-        self.cwIV_radiobutton = Radiobutton(self.master, text='CW I-V', variable=self.radiobutton_var,value='CW_IV')
-        self.cwIV_radiobutton.grid(column=1, row=1, padx=(10,0), sticky='W')
-        self.cwLI_radiobutton = Radiobutton(self.master, text='CW L-I', variable=self.radiobutton_var,value='CW_LI')
-        self.cwLI_radiobutton.grid(column=1, row=2, padx=(10,0), sticky='W')
-        # Set default value to pulsed L-I-V
-        self.radiobutton_var.set('Pulse_LIV')
+        ## Continuous wave (CW) measurement section
 
-        # Start measurement button
+        # CW section label
+        self.CW_label = Label(self.master, text='Continuous Wave Measurements', font = 'Helvetica 15 underline')
+        self.CW_label.grid(column=0,row=0,columnspan=3)
+        # CW L-I-V measurement button
+        self.CW_LIV_radiobutton = Radiobutton(self.master, text='CW L-I-V', variable=self.selectedMeasurement,value='CW_LIV')
+        self.CW_LIV_radiobutton.grid(column=0, row=1, padx=(10,0), sticky='W')
+        # CW I-V measurement button
+        self.CW_IV_radiobutton = Radiobutton(self.master, text='CW I-V', variable=self.selectedMeasurement,value='CW_IV')
+        self.CW_IV_radiobutton.grid(column=1, row=1, padx=(10,0), sticky='W')
+        # CW L-I measurement button
+        self.CW_LI_radiobutton = Radiobutton(self.master, text='CW L-I', variable=self.selectedMeasurement,value='CW_LI')
+        self.CW_LI_radiobutton.grid(column=2, row=1, padx=(10,0), sticky='W')
+
+        ## Voltage pulsed (VPulse) measurement section
+
+        # VPulse section label
+        self.VPulse_label = Label(self.master, text='Voltage Pulsed Measurements', font='Helvetica 15 underline')
+        self.VPulse_label.grid(column=0, row=3, columnspan=3)
+        # VPulse L-I-V measurement button
+        self.VPulse_LIV_radiobutton = Radiobutton(self.master, text='Pulsed L-I-V', variable=self.selectedMeasurement,value='VPulse_LIV')
+        self.VPulse_LIV_radiobutton.grid(column=0, row=4,sticky='W')
+        # VPulse I-V measurement button
+        self.VPulse_IV_radiobutton = Radiobutton(self.master, text='Pulsed I-V', variable=self.selectedMeasurement,value='VPulse_IV')
+        self.VPulse_IV_radiobutton.grid(column=1, row=4,sticky='W')
+        # VPulse L-I measurement button
+        self.VPulse_LI_radiobutton = Radiobutton(self.master, text='Pulsed L-I', variable=self.selectedMeasurement,value='VPulse_LI')
+        self.VPulse_LI_radiobutton.grid(column=2, row=4,sticky='W')
+
+        ## Current pulsed (IPulse) measurement section
+
+        # IPulse section label
+        self.IPulse_label = Label(self.master, text='Current Pulsed Measurements', font='Helvetica 15 underline')
+        self.IPulse_label.grid(column=0, row=5, columnspan=3)
+        # IPulse L-I-V measurement button
+        self.IPulse_LIV_radiobutton = Radiobutton(self.master, text='Current Pulsed L-I-V', variable=self.selectedMeasurement,value='IPulse_LIV')
+        self.IPulse_LIV_radiobutton.grid(column=0, row=6,sticky='W')
+        # IPulse I-V measurement button
+        self.IPulse_IV_radiobutton = Radiobutton(self.master, text='Current Pulsed I-V', variable=self.selectedMeasurement,value='IPulse_IV')
+        self.IPulse_IV_radiobutton.grid(column=1, row=6,sticky='W')
+        # IPulse L-I measurement button
+        self.IPulse_LI_radiobutton = Radiobutton(self.master, text='Current Pulsed L-I', variable=self.selectedMeasurement,value='IPulse_LI')
+        self.IPulse_LI_radiobutton.grid(column=2, row=6,sticky='W')
+
+        # Set default value to CW L-I-V
+        self.selectedMeasurement.set('CW_LIV')
+
+        # Open measurement button
         self.measure_button = Button(self.master, text='Open Measurement', command=self.open_measure_window)
-        self.measure_button.grid(column=2, row=0, rowspan=3, padx=(10,10))
+        self.measure_button.grid(column=0, row=7, padx=(10,10))
 
     def open_measure_window(self):
         top = Toplevel(root)
-        if 'CW_LIV' == self.radiobutton_var.get():
+        if 'CW_LIV' == self.selectedMeasurement.get():
             CWLIV_gui = LIV_CW(top)
-        elif 'CW_IV' == self.radiobutton_var.get():
+        elif 'CW_IV' == self.selectedMeasurement.get():
             CWIV_gui = IV_CW(top)
-        elif 'CW_LI' == self.radiobutton_var.get():
+        elif 'CW_LI' == self.selectedMeasurement.get():
             CWLI_gui = LI_CW(top)
-        elif 'Pulse_LIV' == self.radiobutton_var.get():
+        elif 'Pulse_LIV' == self.selectedMeasurement.get():
             PulseLIV_gui = LIV_Pulse(top)
-        elif 'Pulse_IV' == self.radiobutton_var.get():
+        elif 'Pulse_IV' == self.selectedMeasurement.get():
             PulseIV_gui = IV_Pulse(top)
-        elif 'Pulse_LI' == self.radiobutton_var.get():
+        elif 'Pulse_LI' == self.selectedMeasurement.get():
             PulseLI_gui = LI_Pulse(top)
-
 
 class LIV_CW():
 
@@ -1210,8 +1240,7 @@ def on_closing():
     if messagebox.askokcancel('Quit', 'Do you want to quit?'):
         root.destroy()
 
-
 root = tk.Tk()
-Meas_gui = MeasSelect(root)
+Selection_GUI = MeasSelect(root)
 root.protocol('WM_DELETE_WINDOW', on_closing)
 root.mainloop()
