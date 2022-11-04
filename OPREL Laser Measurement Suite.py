@@ -904,14 +904,6 @@ class LI_Pulse():
                 voltage_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" %self.light_channel.get())[0]
                 prev_voltage_amplitude = voltage_ampl_osc
                 # Adjust vertical scales if measured amplitude reaches top of screen (99% of display)
-                # print("99 percent current value: ")
-                # print(0.99*totalDisplayCurrent)
-                # print("99 percent light value: ")
-                # print(0.99*totalDisplayVoltage)
-                # print("Measured current: ")
-                # print(current_ampl_osc)
-                # print("Measured light: ")
-                # print(voltage_ampl_osc)
                 if (current_ampl_osc > 0.99*totalDisplayCurrent):
                     vertScaleCurrent = self.incrOscVertScale(vertScaleCurrent)
                     totalDisplayCurrent = 6*vertScaleCurrent
