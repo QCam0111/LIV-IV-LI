@@ -32,7 +32,7 @@ class MeasSelect():
         self.pulseLIV_radiobutton.grid(column=0, row=0,sticky='W')
         self.pulseIV_radiobutton = Radiobutton(self.master, text='Pulsed I-V', variable=self.radiobutton_var,value='Pulse_IV')
         self.pulseIV_radiobutton.grid(column=0, row=1,sticky='W')
-        self.pulseLI_radiobutton = Radiobutton(self.master, text='Pulsed L-I', variable=self.radiobutton_var,value='Pulse_LI')
+        self.pulseLI_radiobutton = Radiobutton(self.master, text='Voltage Pulsed L-I', variable=self.radiobutton_var,value='Voltage_Pulse_LI')
         self.pulseLI_radiobutton.grid(column=0, row=2,sticky='W')
         # CW button selections
         self.cwLIV_radiobutton = Radiobutton(self.master, text='CW L-I-V', variable=self.radiobutton_var,value='CW_LIV')
@@ -60,8 +60,8 @@ class MeasSelect():
             PulseLIV_gui = LIV_Pulse(top)
         elif 'Pulse_IV' == self.radiobutton_var.get():
             PulseIV_gui = IV_Pulse(top)
-        elif 'Pulse_LI' == self.radiobutton_var.get():
-            PulseLI_gui = LI_Pulse(top)
+        elif 'Voltage Pulse_LI' == self.radiobutton_var.get():
+            PulseLI_gui = Voltage_LI_Pulse(top)
 
 
 class LIV_CW():
@@ -821,7 +821,7 @@ class IV_Pulse():
         self.figCanv.draw()
         self.figCanv.get_tk_widget().grid(column=0, row=0)
 
-class LI_Pulse():
+class Voltage_LI_Pulse():
 
     def start_li_pulse(self):
         # Range of values for vertical scale on oscilloscope
