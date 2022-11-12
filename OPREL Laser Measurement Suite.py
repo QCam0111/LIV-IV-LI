@@ -60,7 +60,7 @@ class MeasSelect():
             PulseLIV_gui = LIV_Pulse(top)
         elif 'Pulse_IV' == self.radiobutton_var.get():
             PulseIV_gui = IV_Pulse(top)
-        elif 'Voltage Pulse_LI' == self.radiobutton_var.get():
+        elif 'Voltage_Pulse_LI' == self.radiobutton_var.get():
             PulseLI_gui = Voltage_LI_Pulse(top)
 
 
