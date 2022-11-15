@@ -30,54 +30,54 @@ class MeasSelect():
         ## Continuous wave (CW) measurement section
 
         # CW section label
-        self.CW_label = Label(self.master, text='Continuous Wave Measurements', font = 'Helvetica 15 underline')
-        self.CW_label.grid(column=0,row=0,columnspan=3)
+        self.CW_label = Label(self.master, text='Continuous Wave Measurements', font=('Segoe UI Semibold', 12, 'underline'))
+        self.CW_label.grid(column=0, row=0, columnspan=3, padx=(5,0), pady=(5,5), sticky='W')
         # CW L-I-V measurement button
-        self.CW_LIV_radiobutton = Radiobutton(self.master, text='CW L-I-V', variable=self.selectedMeasurement,value='CW_LIV')
-        self.CW_LIV_radiobutton.grid(column=0, row=1, padx=(10,0), sticky='W')
+        self.CW_LIV_radiobutton = Radiobutton(self.master, text='CW L-I-V', variable=self.selectedMeasurement,value='CW_LIV', font=('Segoe UI', 10))
+        self.CW_LIV_radiobutton.grid(column=0, row=1, padx=(5,0), sticky='W')
         # CW I-V measurement button
-        self.CW_IV_radiobutton = Radiobutton(self.master, text='CW I-V', variable=self.selectedMeasurement,value='CW_IV')
-        self.CW_IV_radiobutton.grid(column=1, row=1, padx=(10,0), sticky='W')
+        self.CW_IV_radiobutton = Radiobutton(self.master, text='CW I-V', variable=self.selectedMeasurement,value='CW_IV', font=('Segoe UI', 10))
+        self.CW_IV_radiobutton.grid(column=1, row=1, padx=(5,0), sticky='W')
         # CW L-I measurement button
-        self.CW_LI_radiobutton = Radiobutton(self.master, text='CW L-I', variable=self.selectedMeasurement,value='CW_LI')
-        self.CW_LI_radiobutton.grid(column=2, row=1, padx=(10,0), sticky='W')
+        self.CW_LI_radiobutton = Radiobutton(self.master, text='CW L-I', variable=self.selectedMeasurement,value='CW_LI', font=('Segoe UI', 10))
+        self.CW_LI_radiobutton.grid(column=2, row=1, padx=(5,0), sticky='W')
 
         ## Voltage pulsed (VPulse) measurement section
 
         # VPulse section label
-        self.VPulse_label = Label(self.master, text='Voltage Pulsed Measurements', font='Helvetica 15 underline')
-        self.VPulse_label.grid(column=0, row=3, columnspan=3)
+        self.VPulse_label = Label(self.master, text='Voltage Pulsed Measurements', font=('Segoe UI Semibold', 12, 'underline'))
+        self.VPulse_label.grid(column=0, row=3, columnspan=3, padx=(5,0), pady=(5,5), sticky='W')
         # VPulse L-I-V measurement button
-        self.VPulse_LIV_radiobutton = Radiobutton(self.master, text='Pulsed L-I-V', variable=self.selectedMeasurement,value='VPulse_LIV')
-        self.VPulse_LIV_radiobutton.grid(column=0, row=4,sticky='W')
+        self.VPulse_LIV_radiobutton = Radiobutton(self.master, text='Voltage Pulsed L-I-V', variable=self.selectedMeasurement,value='VPulse_LIV', font=('Segoe UI', 10))
+        self.VPulse_LIV_radiobutton.grid(column=0, row=4, padx=(5,0),sticky='W')
         # VPulse I-V measurement button
-        self.VPulse_IV_radiobutton = Radiobutton(self.master, text='Pulsed I-V', variable=self.selectedMeasurement,value='VPulse_IV')
-        self.VPulse_IV_radiobutton.grid(column=1, row=4,sticky='W')
+        self.VPulse_IV_radiobutton = Radiobutton(self.master, text='Voltage Pulsed I-V', variable=self.selectedMeasurement,value='VPulse_IV', font=('Segoe UI', 10))
+        self.VPulse_IV_radiobutton.grid(column=1, row=4, padx=(5,0),sticky='W')
         # VPulse L-I measurement button
-        self.VPulse_LI_radiobutton = Radiobutton(self.master, text='Pulsed L-I', variable=self.selectedMeasurement,value='VPulse_LI')
-        self.VPulse_LI_radiobutton.grid(column=2, row=4,sticky='W')
+        self.VPulse_LI_radiobutton = Radiobutton(self.master, text='Voltage Pulsed L-I', variable=self.selectedMeasurement,value='VPulse_LI', font=('Segoe UI', 10))
+        self.VPulse_LI_radiobutton.grid(column=2, row=4, padx=(5,0),sticky='W')
 
         ## Current pulsed (IPulse) measurement section
 
         # IPulse section label
-        self.IPulse_label = Label(self.master, text='Current Pulsed Measurements', font='Helvetica 15 underline')
-        self.IPulse_label.grid(column=0, row=5, columnspan=3)
+        self.IPulse_label = Label(self.master, text='Current Pulsed Measurements', font=('Segoe UI Semibold', 12, 'underline'))
+        self.IPulse_label.grid(column=0, row=5, padx=(5,0), pady=(5,5), columnspan=3, sticky='W')
         # IPulse L-I-V measurement button
-        self.IPulse_LIV_radiobutton = Radiobutton(self.master, text='Current Pulsed L-I-V', variable=self.selectedMeasurement,value='IPulse_LIV')
-        self.IPulse_LIV_radiobutton.grid(column=0, row=6,sticky='W')
+        self.IPulse_LIV_radiobutton = Radiobutton(self.master, text='Current Pulsed L-I-V', variable=self.selectedMeasurement,value='IPulse_LIV', font=('Segoe UI', 10))
+        self.IPulse_LIV_radiobutton.grid(column=0, row=6, padx=(5,0),sticky='W')
         # IPulse I-V measurement button
-        self.IPulse_IV_radiobutton = Radiobutton(self.master, text='Current Pulsed I-V', variable=self.selectedMeasurement,value='IPulse_IV')
-        self.IPulse_IV_radiobutton.grid(column=1, row=6,sticky='W')
+        self.IPulse_IV_radiobutton = Radiobutton(self.master, text='Current Pulsed I-V', variable=self.selectedMeasurement,value='IPulse_IV', font=('Segoe UI', 10))
+        self.IPulse_IV_radiobutton.grid(column=1, row=6, padx=(5,0),sticky='W')
         # IPulse L-I measurement button
-        self.IPulse_LI_radiobutton = Radiobutton(self.master, text='Current Pulsed L-I', variable=self.selectedMeasurement,value='IPulse_LI')
-        self.IPulse_LI_radiobutton.grid(column=2, row=6,sticky='W')
+        self.IPulse_LI_radiobutton = Radiobutton(self.master, text='Current Pulsed L-I', variable=self.selectedMeasurement,value='IPulse_LI', font=('Segoe UI', 10))
+        self.IPulse_LI_radiobutton.grid(column=2, row=6, padx=(5,0),sticky='W')
 
         # Set default value to CW L-I-V
         self.selectedMeasurement.set('CW_LIV')
 
         # Open measurement button
-        self.measure_button = Button(self.master, text='Open Measurement', command=self.open_measure_window)
-        self.measure_button.grid(column=0, row=7, padx=(10,10))
+        self.measure_button = Button(self.master, text='Open Measurement', command=self.open_measure_window, font=('Segoe UI', 10))
+        self.measure_button.grid(column=2, row=7, padx=(10,20), pady=(5,10), sticky='W')
 
     def open_measure_window(self):
         top = Toplevel(root)
@@ -87,11 +87,11 @@ class MeasSelect():
             CWIV_gui = IV_CW(top)
         elif 'CW_LI' == self.selectedMeasurement.get():
             CWLI_gui = LI_CW(top)
-        elif 'Pulse_LIV' == self.selectedMeasurement.get():
+        elif 'VPulse_LIV' == self.selectedMeasurement.get():
             PulseLIV_gui = LIV_Pulse(top)
-        elif 'Pulse_IV' == self.selectedMeasurement.get():
+        elif 'VPulse_IV' == self.selectedMeasurement.get():
             PulseIV_gui = IV_Pulse(top)
-        elif 'Pulse_LI' == self.selectedMeasurement.get():
+        elif 'VPulse_LI' == self.selectedMeasurement.get():
             PulseLI_gui = LI_Pulse(top)
 
 class LIV_CW():
