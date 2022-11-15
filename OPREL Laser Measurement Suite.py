@@ -16,7 +16,6 @@ import shutil
 
 rm = pyvisa.ResourceManager()
 
-
 class MeasSelect():
 
     def __init__(self, parent):
@@ -124,7 +123,6 @@ class MeasSelect():
         elif 'IPulse_LI' == self.selectedMeasurement.get():
             IPulseLI_gui = IPulse_LI(top)
 
-
 class CW_LIV():
 
     def __init__(self, parent):
@@ -148,7 +146,6 @@ class CW_LIV():
         self.figCanv = FigureCanvasTkAgg(self.fig, master=self.plotFrame)
         self.figCanv.draw()
         self.figCanv.get_tk_widget().grid(column=0, row=0)
-
 
 class CW_IV():
 
@@ -518,7 +515,6 @@ class CW_IV():
         self.keithley2_addr.insert(0, 'GPIB0::2::INSTR')
         self.tec_addr.insert(0, 'ASRL3::INSTR')
 
-
 class CW_LI():
 
     """
@@ -849,7 +845,6 @@ class CW_LI():
         self.keithleyS_addr.insert(0, 'GPIB0::1::INSTR')
         self.keithleyM_addr.insert(0, 'GPIB0::2::INSTR')
 
-
 class VPulse_LIV():
 
     def __init__(self, parent):
@@ -874,7 +869,6 @@ class VPulse_LIV():
         self.figCanv.draw()
         self.figCanv.get_tk_widget().grid(column=0, row=0)
 
-
 class VPulse_IV():
 
     def __init__(self, parent):
@@ -898,7 +892,6 @@ class VPulse_IV():
         self.figCanv = FigureCanvasTkAgg(self.fig, master=self.plotFrame)
         self.figCanv.draw()
         self.figCanv.get_tk_widget().grid(column=0, row=0)
-
 
 class VPulse_LI():
 
@@ -1315,7 +1308,6 @@ class VPulse_LI():
             self.devFrame, self.light_channel, *channels)
         self.light_channel_dropdown.grid(column=1, row=5)
 
-
 class IPulse_LIV():
 
     def __init__(self, parent):
@@ -1340,7 +1332,6 @@ class IPulse_LIV():
         self.figCanv.draw()
         self.figCanv.get_tk_widget().grid(column=0, row=0)
 
-
 class IPulse_IV():
 
     def __init__(self, parent):
@@ -1364,7 +1355,6 @@ class IPulse_IV():
         self.figCanv = FigureCanvasTkAgg(self.fig, master=self.plotFrame)
         self.figCanv.draw()
         self.figCanv.get_tk_widget().grid(column=0, row=0)
-
 
 class IPulse_LI():
 
@@ -1391,8 +1381,6 @@ class IPulse_LI():
         self.figCanv.get_tk_widget().grid(column=0, row=0)
 
 # On closing, ensure outputs are turned off
-
-
 def on_closing():
     if messagebox.askokcancel('Quit', 'Do you want to quit?'):
         root.destroy()
