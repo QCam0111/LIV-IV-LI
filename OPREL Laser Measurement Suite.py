@@ -63,7 +63,6 @@ class MeasSelect():
         elif 'Voltage_Pulse_LI' == self.radiobutton_var.get():
             PulseLI_gui = Voltage_LI_Pulse(top)
 
-
 class LIV_CW():
 
     def __init__(self, parent):
@@ -839,7 +838,12 @@ class Voltage_LI_Pulse():
         self.scope.write(":TRIGger:MODE GLITch")
         self.scope.write(":TRIGger:GLITch:SOURce CHANnel%d" %self.current_channel.get())
         self.scope.write(":TRIGger:GLITch:QUALifier RANGe")
-        self.scope.write(":TRIGger:GLITch:RANGe 4E-7,6E-7")
+
+        # Define glitch trigger range as: Pulse Width +/- 100 ns
+        glitchTriggerUpper = float(self.pulse_width_entry.get()) + 0.1
+        glitchTriggerLower = float(self.pulse_width_entry.get()) - 0.1
+
+        self.scope.write(":TRIGger:GLITch:RANGe %.3fus,%.3fus" %(glitchTriggerLower,glitchTriggerUpper))
         self.scope.write("TRIGger:GLITch:LEVel 1E-3")
 
         # Channel scales - set each channel to 1mV/div to start
@@ -866,7 +870,7 @@ class Voltage_LI_Pulse():
         self.pulser.write("*CLS")
         self.pulser.write("OUTPut:IMPedance 50")
         self.pulser.write("SOURce INTernal")
-        self.pulser.write("PULSe:WIDTh " + self.pulse_width_entry.get() + "us")
+        self.pulser.write("PULSe:WIDTh "+ self.pulse_width_entry.get() + "us")
         self.pulser.write("FREQuency " + self.frequency_entry.get() + "kHz")
         self.pulser.write("OUTPut ON")
 
@@ -1041,7 +1045,7 @@ class Voltage_LI_Pulse():
         self.master = parent
 
         # Assign window title and geometry
-        self.master.title('Pulse Measurement: L-I')
+        self.master.title('Voltage Pulse Measurement: L-I')
 
         # Plot frame
         self.plotFrame = LabelFrame(self.master, text='Plot', padx=5, pady=5)
