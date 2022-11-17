@@ -1138,26 +1138,26 @@ class VPulse_LI():
         # Assign window title and geometry
         self.master.title('Pulse Measurement: L-I')
 
-        # Plot frame
-        self.plotFrame = LabelFrame(self.master, text='Plot', padx=5, pady=5)
-        # Display plot frame
-        self.plotFrame.grid(column=0, row=0, rowspan=2)
+        # # Plot frame
+        # self.plotFrame = LabelFrame(self.master, text='Plot', padx=5, pady=5)
+        # # Display plot frame
+        # self.plotFrame.grid(column=0, row=0, rowspan=2)
 
-        self.fig = Figure(figsize=(5, 5), dpi=100)
+        # self.fig = Figure(figsize=(5, 5), dpi=100)
 
-        y = 0
+        # y = 0
 
-        self.plot1 = self.fig.add_subplot(111)
-        self.plot1.plot(y)
+        # self.plot1 = self.fig.add_subplot(111)
+        # self.plot1.plot(y)
 
-        self.figCanv = FigureCanvasTkAgg(self.fig, master=self.plotFrame)
-        self.figCanv.draw()
-        self.figCanv.get_tk_widget().grid(column=0, row=0)
+        # self.figCanv = FigureCanvasTkAgg(self.fig, master=self.plotFrame)
+        # self.figCanv.draw()
+        # self.figCanv.get_tk_widget().grid(column=0, row=0)
 
         # Pulse settings frame
         self.pulseFrame = LabelFrame(self.master, text='Pulse Settings')
         # Display pulse settings frame
-        self.pulseFrame.grid(column=1, row=0, sticky='W', padx=(10, 5))
+        self.pulseFrame.grid(column=0, row=0, rowspan=2, sticky='N', padx=(10, 5), pady=(0,10))
 
         # Create plot directory label, button, and entry box
         # Plot File Label
@@ -1220,26 +1220,26 @@ class VPulse_LI():
         self.start_voltage_label.grid(column=1, row=8)
         # Start voltage entry box
         self.start_voltage_entry = Entry(self.pulseFrame, width=5)
-        self.start_voltage_entry.grid(column=1, row=9)
+        self.start_voltage_entry.grid(column=1, row=9, pady=(0,10))
 
         # Stop voltage label
         self.stop_voltage_label = Label(self.pulseFrame, text='Stop (V)')
         self.stop_voltage_label.grid(column=2, row=8)
         # Stop voltage entry box
         self.stop_voltage_entry = Entry(self.pulseFrame, width=5)
-        self.stop_voltage_entry.grid(column=2, row=9)
+        self.stop_voltage_entry.grid(column=2, row=9, pady=(0,10))
 
         # Frequency label
         self.frequency_label = Label(self.pulseFrame, text='Frequency (kHz)')
         self.frequency_label.grid(column=3, row=8)
         # Frequency entry box
         self.frequency_entry = Entry(self.pulseFrame, width=5)
-        self.frequency_entry.grid(column=3, row=9)
+        self.frequency_entry.grid(column=3, row=9, pady=(0,10))
 
         # Start Button
         self.start_button = Button(
-            self.pulseFrame, text='Start', command=self.start_li_pulse)
-        self.start_button.grid(column=2, row=10, ipadx=10, pady=5)
+            self.master, text='Start', command=self.start_li_pulse)
+        self.start_button.grid(column=1, row=1, ipadx=10, pady=5)
         # # Stop Button
         # self.stop_button = Button(
         #     self.setFrame, text='Stop', state=DISABLED, command=self.stop_pressed)
@@ -1248,7 +1248,7 @@ class VPulse_LI():
         # Device settings frame
         self.devFrame = LabelFrame(self.master, text='Device Settings')
         # Display device settings frame
-        self.devFrame.grid(column=1, row=1, sticky='W', padx=(10, 5))
+        self.devFrame.grid(column=1, row=0, sticky='N', padx=(10, 5))
 
         # Device addresses
         connected_addresses = list(rm.list_resources())
