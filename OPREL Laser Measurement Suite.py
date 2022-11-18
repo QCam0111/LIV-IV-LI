@@ -840,10 +840,10 @@ class Voltage_LI_Pulse():
         self.scope.write(":TRIGger:GLITch:QUALifier RANGe")
 
         # Define glitch trigger range as: Pulse Width +/- 100 ns
-        glitchTriggerUpper = float(self.pulse_width_entry.get()) + 0.1
-        glitchTriggerLower = float(self.pulse_width_entry.get()) - 0.1
+        glitchTriggerUpper = float(self.pulse_width_entry.get())*1.25
+        glitchTriggerLower = float(self.pulse_width_entry.get())*0.75
 
-        self.scope.write(":TRIGger:GLITch:RANGe %.3fus,%.3fus" %(glitchTriggerLower,glitchTriggerUpper))
+        self.scope.write(":TRIGger:GLITch:RANGe %.6fus,%.6fus" %(glitchTriggerLower,glitchTriggerUpper))
         self.scope.write("TRIGger:GLITch:LEVel 1E-3")
 
         # Channel scales - set each channel to 1mV/div to start
