@@ -893,7 +893,6 @@ class VPulse_IV():
         self.figCanv.draw()
         self.figCanv.get_tk_widget().grid(column=0, row=0)
 
-
 class VPulse_LI():
 
     def start_li_pulse(self):
@@ -917,11 +916,13 @@ class VPulse_LI():
                          self.current_channel.get())
         self.scope.write(":TRIGger:GLITch:QUALifier RANGe")
 
-        # Define glitch trigger range as: Pulse Width +/- 100 ns
-        glitchTriggerUpper = float(self.pulse_width_entry.get())*1.25
+        # Define glitch trigger range as: [75% of PW, 125% of PW]
         glitchTriggerLower = float(self.pulse_width_entry.get())*0.75
+        glitchTriggerUpper = float(self.pulse_width_entry.get())*1.25
 
         self.scope.write(":TRIGger:GLITch:RANGe %.6fus,%.6fus" %(glitchTriggerLower,glitchTriggerUpper))
+
+        # Set initial trigger point to 1 mV
         self.scope.write("TRIGger:GLITch:LEVel 1E-3")
 
         # Channel scales - set each channel to 1mV/div to start
@@ -945,8 +946,9 @@ class VPulse_LI():
         totalDisplayCurrent = 6*vertScaleCurrent
         totalDisplayVoltage = 6*vertScaleVoltage
 
-        # Connect to AVTECH Pulser
+        # Connect to AVTECH Voltage Pulser
         self.pulser = rm.open_resource(self.pulse_address.get())
+
         # Initialize pulser
         self.pulser.write("*RST")
         self.pulser.write("*CLS")
@@ -1384,7 +1386,14 @@ class IPulse_LI():
         self.scope.write(":TRIGger:GLITch:SOURce CHANnel%d" %
                          self.current_channel.get())
         self.scope.write(":TRIGger:GLITch:QUALifier RANGe")
-        self.scope.write(":TRIGger:GLITch:RANGe 4E-7,6E-7")
+
+        # Define glitch trigger range as: [75% of PW, 125% of PW]
+        glitchTriggerLower = float(self.pulse_width_entry.get())*0.75
+        glitchTriggerUpper = float(self.pulse_width_entry.get())*1.25
+
+        self.scope.write(":TRIGger:GLITch:RANGe %.6fus,%.6fus" %(glitchTriggerLower,glitchTriggerUpper))
+
+        # Set initial trigger point to 1 mV
         self.scope.write("TRIGger:GLITch:LEVel 1E-3")
 
         # Channel scales - set each channel to 1mV/div to start
@@ -1410,6 +1419,7 @@ class IPulse_LI():
 
         # Connect to Current Pulser
         self.pulser = rm.open_resource(self.pulse_address.get())
+
         # Initialize pulser
         self.pulser.write("*RST")
         self.pulser.write("*CLS")
@@ -1485,6 +1495,7 @@ class IPulse_LI():
             currentData.append(current_ampl_device)
 
             i = i + 1
+            
         # Convert current and voltage readings to mA and mV values
         currentData[:] = [x*1000 for x in currentData]
         voltageData[:] = [x*1000 for x in voltageData]
@@ -1492,6 +1503,7 @@ class IPulse_LI():
         # Turn off the pulser, and clear event registers
         self.pulser.write("OUTPut OFF")
         self.pulser.write("*CLS")
+
         # Stop acquisition on oscilloscope
         self.scope.write(":STOP")
 
