@@ -1413,13 +1413,13 @@ class IPulse_LI():
         self.pulser.write("OUTPut OFF")
 
         # Calculate number of points based on step size
-        voltageRangeStart = float(self.start_voltage_entry.get())
-        voltageRangeStop = float(
-            self.stop_voltage_entry.get()) + float(self.step_size_entry.get())/1000
-        voltageRangeStep = float(self.step_size_entry.get())/1000
+        currentRangeStart = float(self.start_current_entry.get())
+        currentRangeStop = float(
+            self.stop_current_entry.get()) + float(self.step_size_entry.get())/1000
+        currentRangeStep = float(self.step_size_entry.get())/1000
 
-        voltageSourceValues = np.arange(
-            voltageRangeStart, voltageRangeStop, voltageRangeStep)
+        currentSourceValues = np.arange(
+            currentRangeStart, currentRangeStop, currentRangeStep)
 
         # Lists for data values
         currentData = list()  # To be plotted on y-axis
@@ -1430,17 +1430,19 @@ class IPulse_LI():
         voltageData.append(0)
         currentData.append(0)
 
-        for V_s in voltageSourceValues:
+        for I_s in currentSourceValues:
 
-            self.pulser.write("VOLT %.3f" % (V_s))
+            self.pulser.write(":LDI %.3f" % (I_s))
             self.pulser.write("OUTPut ON")
             sleep(0.1)
             # Read current amplitude from oscilloscope; multiply by 2 to use 50-ohms channel
             current_ampl_osc = self.scope.query_ascii_values(
                 "SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.current_channel.get())[0]
+
             # Read photodetector output
             voltage_ampl_osc = self.scope.query_ascii_values(
                 "SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.light_channel.get())[0]
+
             # Adjust vertical scales if measured amplitude reaches top of screen (99% of display)
             if (current_ampl_osc > 0.99*totalDisplayCurrent):
                 vertScaleCurrent = self.incrOscVertScale(vertScaleCurrent)
@@ -1452,6 +1454,7 @@ class IPulse_LI():
                 voltage_ampl_osc = self.scope.query_ascii_values(
                     "SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.light_channel.get())[0]
                 sleep(0.75)
+                
             if (voltage_ampl_osc > 0.99*totalDisplayVoltage):
                 vertScaleVoltage = self.incrOscVertScale(vertScaleVoltage)
                 totalDisplayVoltage = 6*vertScaleVoltage
@@ -1462,10 +1465,13 @@ class IPulse_LI():
                 voltage_ampl_osc = self.scope.query_ascii_values(
                     "SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.light_channel.get())[0]
                 sleep(0.75)
+
             # Update trigger cursor to half of measured current amplitude
             self.updateTriggerCursor(
                 current_ampl_osc, self.scope, vertScaleCurrent)
+
             R_S = 50.0  # AVTECH pulser source resistance
+
             current_ampl_device = 2*current_ampl_osc
             voltage_ampl_device = voltage_ampl_osc
 
@@ -1519,7 +1525,7 @@ class IPulse_LI():
         ax1.set_xlabel('Measured device current (mA)')
         ax1.set_ylabel('Measured device light output')
         ax1.plot(currentData, voltageData, color='blue',
-                 label='L-I Characteristic')
+                 label='Current Pulsed L-I Characteristic')
         ax1.legend(loc='upper left')
 
         plt.show()
