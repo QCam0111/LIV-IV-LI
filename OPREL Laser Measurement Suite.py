@@ -1027,7 +1027,7 @@ class VPulse_IV():
 
         while(os.path.exists(filesave2)):
             filesave2 = os.path.join(self.txt_dir_entry.get(
-            ), 'no' + str(self.file_name_entry.get()+i)+'.txt')
+            ), 'no' + self.file_name_entry.get()+str(i)+'.txt')
             i = i+1
 
         f = open(filesave2, 'w+')
@@ -1434,7 +1434,7 @@ class VPulse_LI():
 
         while(os.path.exists(filesave2)):
             filesave2 = os.path.join(self.txt_dir_entry.get(
-            ), 'no' + str(self.file_name_entry.get()+i)+'.txt')
+            ), 'no' + self.file_name_entry.get()+str(i)+'.txt')
             i = i+1
 
         f = open(filesave2, 'w+')
@@ -1880,7 +1880,7 @@ class IPulse_VI():
 
         while(os.path.exists(filesave2)):
             filesave2 = os.path.join(self.txt_dir_entry.get(
-            ), 'no' + str(self.file_name_entry.get()+i)+'.txt')
+            ), 'no' + self.file_name_entry.get()+str(i)+'.txt')
             i = i+1
 
         f = open(filesave2, 'w+')
@@ -2279,7 +2279,7 @@ class IPulse_LI():
 
         while(os.path.exists(filesave2)):
             filesave2 = os.path.join(self.txt_dir_entry.get(
-            ), 'no' + str(self.file_name_entry.get()+i)+'.txt')
+            ), 'no' + self.file_name_entry.get()+str(i)+'.txt')
             i = i+1
 
         f = open(filesave2, 'w+')
@@ -2302,6 +2302,7 @@ class IPulse_LI():
         ax1.set_ylabel('Measured device light output')
         ax1.plot(currentData, voltageData, color='blue',
                  label='Current Pulsed L-I Characteristic')
+        ax1.text(0, 1,'Current Pulsed\nPulse Width: ' + self.pulse_width_entry.get())
         ax1.legend(loc='upper left')
 
         plt.show()
