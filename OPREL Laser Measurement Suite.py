@@ -972,7 +972,7 @@ class VPulse_IV():
                     "SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.voltage_channel.get())[0]
                 prev_voltage_amplitude = voltage_ampl_osc
                 # Adjust vertical scales if measured amplitude reaches top of screen (99% of display)
-                if (current_ampl_osc > 0.99*totalDisplayCurrent):
+                while (current_ampl_osc > 0.99*totalDisplayCurrent):
                     vertScaleCurrent = self.incrOscVertScale(vertScaleCurrent)
                     totalDisplayCurrent = 6*vertScaleCurrent
                     self.scope.write(":CHANNEL%d:SCALe %.3f" % (
@@ -982,7 +982,7 @@ class VPulse_IV():
                     voltage_ampl_osc = self.scope.query_ascii_values(
                         "SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.voltage_channel.get())[0]
                     sleep(0.75)
-                if (voltage_ampl_osc > 0.99*totalDisplayVoltage):
+                while (voltage_ampl_osc > 0.99*totalDisplayVoltage):
                     vertScaleVoltage = self.incrOscVertScale(vertScaleVoltage)
                     totalDisplayVoltage = 6*vertScaleVoltage
                     self.scope.write(":CHANNEL%d:SCALe %.3f" % (
@@ -992,7 +992,7 @@ class VPulse_IV():
                     voltage_ampl_osc = self.scope.query_ascii_values(
                         "SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.voltage_channel.get())[0]
                     sleep(0.75)
-                # Update trigger cursor to half of measured current amplitude
+                # Update trigger cursor to three quarters of the measured current amplitude
                 self.updateTriggerCursor(
                     current_ampl_osc, self.scope, vertScaleCurrent)
                 R_S = 50.0  # AVTECH pulser source resistance
