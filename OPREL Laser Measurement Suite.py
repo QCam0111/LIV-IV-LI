@@ -93,13 +93,12 @@ class MeasSelect():
         self.selectedMeasurement.set('CW_LIV')
 
         # Open measurement button
-        self.measure_button = Button(self.master, text='Open Measurement',
-                                     command=self.open_measurement_window, font=('Segoe UI', 10))
-        self.measure_button.grid(column=2, row=7, padx=(
-            10, 20), pady=(5, 10), sticky='W')
+        self.measure_button = Button(self.master, text='Open Measurement', command=self.open_measurement_window, font=('Segoe UI', 10))
+        self.measure_button.grid(column=2, row=7, padx=(10, 20), pady=(5, 10), sticky='W')
 
     def open_measurement_window(self):
         top = Toplevel(root)
+
         if 'CW_LIV' == self.selectedMeasurement.get():
             CWLIV_gui = CW_LIV(top)
         elif 'CW_IV' == self.selectedMeasurement.get():
@@ -118,14 +117,38 @@ class MeasSelect():
             IPulseIV_gui = IPulse_IV(top)
         elif 'IPulse_LI' == self.selectedMeasurement.get():
             IPulseLI_gui = IPulse_LI(top)
+        root.withdraw()
 
-# On closing, ensure outputs are turned off
+        # When the user closes the measurement window, bring the root window back
+        def minimize_root():
+            top.destroy()
+            root.deiconify()
+
+        top.protocol('WM_DELETE_WINDOW', minimize_root)
+
+# When the user attempts to close the window, double check if they would like to Quit.
 def on_closing():
     if messagebox.askokcancel('Quit', 'Do you want to quit?'):
         root.destroy()
 
-
 root = tk.Tk()
+
+# Place root window in the middle of the user's screen from https://coderslegacy.com/tkinter-center-window-on-screen/
+
+width=475
+height=250
+
+# Width of the screen
+screen_width = root.winfo_screenwidth()  
+# Height of the screen
+screen_height = root.winfo_screenheight()
+ 
+# Calculate Starting X and Y coordinates for Window
+x = (screen_width/2) - (width/2)
+y = (screen_height/2) - (height/2)
+ 
+root.geometry('%dx%d+%d+%d' %(width, height, x, y))
+
 Selection_GUI = MeasSelect(root)
 root.protocol('WM_DELETE_WINDOW', on_closing)
 root.mainloop()
