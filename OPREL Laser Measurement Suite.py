@@ -2,6 +2,7 @@ import Tkinter as tk
 from Tkinter import Label, Button, Radiobutton, Toplevel, StringVar
 import tkMessageBox as messagebox
 
+# Import measurement files
 from CW_LIV import CW_LIV
 from CW_IV import CW_IV
 from CW_LI import CW_LI
