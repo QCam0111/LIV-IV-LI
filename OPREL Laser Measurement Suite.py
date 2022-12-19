@@ -886,15 +886,17 @@ class VPulse_IV():
         self.scope.write(":CHANnel%d:IMPedance FIFTy" %
                          self.voltage_channel.get())
         # self.scope.write(":AUToscale")
-        self.scope.write(":TIMebase:RANGe 2E-6")
+        pulseWidth = float(self.pulse_width_entry.get())
+        self.scope.write(":TIMebase:RANGe %.6fus" %(0.5*pulseWidth*10))
+        # Mulitplication by 10 is due to a peculiaruty of this oscilloscope
         self.scope.write(":TRIGger:MODE GLITch")
         self.scope.write(":TRIGger:GLITch:SOURce CHANnel%d" %
                          self.current_channel.get())
         self.scope.write(":TRIGger:GLITch:QUALifier RANGe")
 
         # Define glitch trigger range as: [75% of PW, 125% of PW]
-        glitchTriggerLower = float(self.pulse_width_entry.get())*0.75
-        glitchTriggerUpper = float(self.pulse_width_entry.get())*1.25
+        glitchTriggerLower = pulseWidth*0.5
+        glitchTriggerUpper = pulseWidth*1.5
 
         self.scope.write(":TRIGger:GLITch:RANGe %.6fus,%.6fus" %(glitchTriggerLower,glitchTriggerUpper))
 
@@ -952,13 +954,21 @@ class VPulse_IV():
         voltageData.append(0)
         currentData.append(0)
 
+        # Handling glitch points
+        prevPulserVoltage = 0
+        V_glitch_1 = 7.13
+
         for V_s in voltageSourceValues:
 
             # Handle glitch issues
-            if (V_s > 7 and V_s < 7.5) or (V_s > 21.3 and V_s < 21.9) or (V_s > 68 and V_s < 68.5):
-                self.pulser.write("OUTPut OFF")
-                self.pulser.write("VOLT %.3f" % V_s)
-                sleep(1)
+            #if (V_s > 7 and V_s < 7.5) or (V_s > 21.3 and V_s < 21.9) or (V_s > 68 and V_s < 68.5):
+            #    self.pulser.write("OUTPut OFF")
+            #    self.pulser.write("VOLT %.3f" % V_s)
+            #    sleep(1)
+            if (prevPulserVoltage < V_glitch_1 <= V_s):
+                self.pulser.write("output off")
+                self.pulser.write("volt %.3f" %V_s)
+                sleep(3)
             else:
                 self.pulser.write("VOLT %.3f" % (V_s))
                 self.pulser.write("OUTPut ON")
@@ -972,6 +982,13 @@ class VPulse_IV():
                     "SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.voltage_channel.get())[0]
                 prev_voltage_amplitude = voltage_ampl_osc
                 # Adjust vertical scales if measured amplitude reaches top of screen (99% of display)
+
+                # Update trigger cursor to three quarters of the measured current amplitude
+                totalDisplayCurrent = 6*vertScaleCurrent
+                old_trigger = 1e-3
+                old_trigger = self.updateTriggerCursor(
+                    current_ampl_osc, self.scope, vertScaleCurrent, old_trigger, totalDisplayCurrent)
+                
                 while (current_ampl_osc > 0.99*totalDisplayCurrent):
                     vertScaleCurrent = self.incrOscVertScale(vertScaleCurrent)
                     totalDisplayCurrent = 6*vertScaleCurrent
@@ -981,6 +998,8 @@ class VPulse_IV():
                         "SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.current_channel.get())[0]
                     voltage_ampl_osc = self.scope.query_ascii_values(
                         "SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.voltage_channel.get())[0]
+                    old_trigger = self.updateTriggerCursor(
+                        current_ampl_osc, self.scope, vertScaleCurrent, old_trigger, totalDisplayCurrent)
                     sleep(0.75)
                 while (voltage_ampl_osc > 0.99*totalDisplayVoltage):
                     vertScaleVoltage = self.incrOscVertScale(vertScaleVoltage)
@@ -991,16 +1010,18 @@ class VPulse_IV():
                         "SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.current_channel.get())[0]
                     voltage_ampl_osc = self.scope.query_ascii_values(
                         "SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.voltage_channel.get())[0]
+                    old_trigger = self.updateTriggerCursor(
+                        current_ampl_osc, self.scope, vertScaleCurrent, old_trigger, totalDisplayCurrent)
                     sleep(0.75)
-                # Update trigger cursor to three quarters of the measured current amplitude
-                self.updateTriggerCursor(
-                    current_ampl_osc, self.scope, vertScaleCurrent)
                 R_S = 50.0  # AVTECH pulser source resistance
                 current_ampl_device = 2*current_ampl_osc
                 voltage_ampl_device = voltage_ampl_osc
 
                 voltageData.append(voltage_ampl_device)
                 currentData.append(current_ampl_device)
+
+                # Handling glitch points
+                prevPulserVoltage = V_s
 
                 i = i + 1
         # Convert current and voltage readings to mA and mV values
@@ -1065,11 +1086,14 @@ class VPulse_IV():
     Description: 
     """
 
-    def updateTriggerCursor(self, pulseAmplitude, scope, presentScale):
+    def updateTriggerCursor(self, pulseAmplitude, scope, presentScale, old_trigger, totalDisplay):
         new_trigger = 3*pulseAmplitude/4.0
-        if (new_trigger < presentScale):
-            new_trigger = presentScale
+        if (new_trigger < 0.25*totalDisplay):
+            new_trigger = 0.25*totalDisplay
+        elif (new_trigger > 0.9*totalDisplay):
+            new_trigger = 0.5*totalDisplay
         scope.write(":TRIGger:GLITch:LEVel %.6f" % (new_trigger))
+        return new_trigger
 
     """
     Function referenced when: 
