@@ -39,9 +39,9 @@ class VPulse_LI():
                          self.current_channel.get())
         self.scope.write(":TRIGger:GLITch:QUALifier RANGe")
 
-        # Define glitch trigger range as: [75% of PW, 125% of PW]
-        glitchTriggerLower = float(self.pulse_width_entry.get())*0.75
-        glitchTriggerUpper = float(self.pulse_width_entry.get())*1.25
+        # Define glitch trigger range as: [50% of PW, 150% of PW]
+        glitchTriggerLower = float(self.pulse_width_entry.get())*0.5
+        glitchTriggerUpper = float(self.pulse_width_entry.get())*1.5
 
         self.scope.write(":TRIGger:GLITch:RANGe %.6fus,%.6fus" %(glitchTriggerLower,glitchTriggerUpper))
 
