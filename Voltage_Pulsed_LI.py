@@ -9,6 +9,10 @@ from Tkinter import Label, Entry, Button, LabelFrame, OptionMenu, StringVar, Int
 
 # Import Browse button functions
 from Browse_buttons import browse_plot_file, browse_txt_file
+# Import Oscilloscope scaling
+from Oscilloscope_Scaling import incrOscVertScale
+# Import trigger updating
+from Update_Trigger import updateTriggerCursor
 
 rm = pyvisa.ResourceManager()
 
@@ -116,7 +120,7 @@ class VPulse_LI():
                 prev_voltage_amplitude = voltage_ampl_osc
                 # Adjust vertical scales if measured amplitude reaches top of screen (99% of display)
                 if (current_ampl_osc > 0.99*totalDisplayCurrent):
-                    vertScaleCurrent = self.incrOscVertScale(vertScaleCurrent)
+                    vertScaleCurrent = incrOscVertScale(vertScaleCurrent)
                     totalDisplayCurrent = 6*vertScaleCurrent
                     self.scope.write(":CHANNEL%d:SCALe %.3f" % (
                         self.current_channel.get(), float(vertScaleCurrent)))
@@ -126,7 +130,7 @@ class VPulse_LI():
                         "SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.light_channel.get())[0]
                     sleep(0.75)
                 if (voltage_ampl_osc > 0.99*totalDisplayVoltage):
-                    vertScaleVoltage = self.incrOscVertScale(vertScaleVoltage)
+                    vertScaleVoltage = incrOscVertScale(vertScaleVoltage)
                     totalDisplayVoltage = 6*vertScaleVoltage
                     self.scope.write(":CHANNEL%d:SCALe %.3f" % (
                         self.light_channel.get(), float(vertScaleVoltage)))
@@ -135,9 +139,9 @@ class VPulse_LI():
                     voltage_ampl_osc = self.scope.query_ascii_values(
                         "SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.light_channel.get())[0]
                     sleep(0.75)
-                # Update trigger cursor to half of measured current amplitude
-                self.updateTriggerCursor(
-                    current_ampl_osc, self.scope, vertScaleCurrent)
+                # Update trigger cursor - update to VPulse_IV scheme?
+                updateTriggerCursor(current_ampl_osc, self.scope, totalDisplayCurrent)
+
                 R_S = 50.0  # AVTECH pulser source resistance
                 current_ampl_device = 2*current_ampl_osc
                 voltage_ampl_device = voltage_ampl_osc
@@ -202,31 +206,6 @@ class VPulse_LI():
                 os.makedirs(self.plot_dir_entry.get())
         except:
             print('Error: Creating directory: ' + self.plot_dir_entry.get())
-
-    """
-    Function referenced when: 
-    Description: 
-    """
-
-    def updateTriggerCursor(self, pulseAmplitude, scope, presentScale):
-        new_trigger = 3*pulseAmplitude/4.0
-        if (new_trigger < presentScale):
-            new_trigger = presentScale
-        scope.write(":TRIGger:GLITch:LEVel %.6f" % (new_trigger))
-
-    """
-    Function referenced when: 
-    Description: 
-    """
-
-    def incrOscVertScale(self, currentScale):
-        # Range of values for vertical scale on oscilloscope
-        scaleValues = [0.001, 0.002, 0.005, 0.01,
-                       0.02, 0.05, 0.1, 0.2, 0.5, 1, 2, 5, 10]
-        scaleIndex = scaleValues.index(currentScale)
-        scaleIndex = scaleIndex + 1
-        newScale = scaleValues[scaleIndex]
-        return newScale
 
     """
     Function referenced when: Initializing the application window
