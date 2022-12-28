@@ -7,16 +7,22 @@ import shutil
 import matplotlib.pyplot as plt
 from Tkinter import Label, Entry, Button, LabelFrame, OptionMenu, StringVar, IntVar
 
+rm = pyvisa.ResourceManager()
+
 # Import Browse button functions
 from Browse_buttons import browse_plot_file, browse_txt_file
 # Import Oscilloscope scaling
-from Oscilloscope_Scaling import incrOscVertScale
+# from Oscilloscope_Scaling import incrOscVertScale
 # Import trigger updating
-from Update_Trigger import updateTriggerCursor
-
-rm = pyvisa.ResourceManager()
+# from Update_Trigger import updateTriggerCursor
 
 class VPulse_IV():
+
+    from Update_Trigger import updateTriggerCursor
+    # Import Oscilloscope scaling
+    from Oscilloscope_Scaling import incrOscVertScale
+    # Import trigger updating
+    from Update_Trigger import updateTriggerCursor
 
     def start_iv_pulse(self):
         # Range of values for vertical scale on oscilloscope
@@ -126,24 +132,24 @@ class VPulse_IV():
                 totalDisplayCurrent = 6*vertScaleCurrent
                 old_trigger = 1e-3
                 old_trigger = self.updateTriggerCursor(
-                    current_ampl_osc, self.scope, vertScaleCurrent, old_trigger, totalDisplayCurrent)
+                    current_ampl_osc, self.scope, totalDisplayCurrent)
                 
                 # Adjust vertical scales if measured amplitude reaches top of screen (99% of display)
                 while (current_ampl_osc > 0.99*totalDisplayCurrent):
-                    vertScaleCurrent = incrOscVertScale(vertScaleCurrent)
+                    vertScaleCurrent = self.incrOscVertScale(vertScaleCurrent)
                     totalDisplayCurrent = 6*vertScaleCurrent
                     self.scope.write(":CHANNEL%d:SCALe %.3f" % (self.current_channel.get(), float(vertScaleCurrent)))
                     current_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.current_channel.get())[0]
                     voltage_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.voltage_channel.get())[0]
-                    old_trigger = updateTriggerCursor(current_ampl_osc, self.scope, totalDisplayCurrent)
+                    old_trigger = self.updateTriggerCursor(current_ampl_osc, self.scope, totalDisplayCurrent)
                     sleep(0.75)
                 while (voltage_ampl_osc > 0.99*totalDisplayVoltage):
-                    vertScaleVoltage = incrOscVertScale(vertScaleVoltage)
+                    vertScaleVoltage = self.incrOscVertScale(vertScaleVoltage)
                     totalDisplayVoltage = 6*vertScaleVoltage
                     self.scope.write(":CHANNEL%d:SCALe %.3f" % (self.voltage_channel.get(), float(vertScaleVoltage)))
                     current_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.current_channel.get())[0]
                     voltage_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.voltage_channel.get())[0]
-                    old_trigger = updateTriggerCursor(current_ampl_osc, self.scope, totalDisplayCurrent)
+                    old_trigger = self.updateTriggerCursor(voltage_ampl_osc, self.scope, totalDisplayVoltage)
                     sleep(0.75)
 
                 R_S = 50.0  # AVTECH pulser source resistance
