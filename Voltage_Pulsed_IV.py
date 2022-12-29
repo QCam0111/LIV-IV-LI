@@ -55,6 +55,8 @@ class VPulse_IV():
 
         # Set initial trigger point to 1 mV
         self.scope.write("TRIGger:GLITch:LEVel 1E-3")
+        # Keep track of previous trigger level for trigger cursor control
+        trigger_prev = 1e-3
 
         # Channel scales - set each channel to 1mV/div to start
         vertScaleCurrent = 0.001
@@ -98,8 +100,6 @@ class VPulse_IV():
         currentData = list()  # To be plotted on y-axis
         voltageData = list()  # To be plotted on x-axis
 
-        i = 1
-
         voltageData.append(0)
         currentData.append(0)
 
@@ -130,12 +130,10 @@ class VPulse_IV():
 
                 # Update trigger cursor to three quarters of the measured current amplitude
                 totalDisplayCurrent = 6*vertScaleCurrent
-                old_trigger = 1e-3
-                old_trigger = self.updateTriggerCursor(
-                    current_ampl_osc, self.scope, totalDisplayCurrent)
+                trigger_prev = self.updateTriggerCursor(current_ampl_osc, self.scope, totalDisplayCurrent)
                 
                 # Adjust vertical scales if measured amplitude reaches top of screen (99% of display)
-                while (current_ampl_osc > 0.99*totalDisplayCurrent):
+                while (current_ampl_osc > 0.9*totalDisplayCurrent):
                     vertScaleCurrent = self.incrOscVertScale(vertScaleCurrent)
                     totalDisplayCurrent = 6*vertScaleCurrent
                     self.scope.write(":CHANNEL%d:SCALe %.3f" % (self.current_channel.get(), float(vertScaleCurrent)))
@@ -143,7 +141,7 @@ class VPulse_IV():
                     voltage_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.voltage_channel.get())[0]
                     old_trigger = self.updateTriggerCursor(current_ampl_osc, self.scope, totalDisplayCurrent)
                     sleep(0.75)
-                while (voltage_ampl_osc > 0.99*totalDisplayVoltage):
+                while (voltage_ampl_osc > 0.9*totalDisplayVoltage):
                     vertScaleVoltage = self.incrOscVertScale(vertScaleVoltage)
                     totalDisplayVoltage = 6*vertScaleVoltage
                     self.scope.write(":CHANNEL%d:SCALe %.3f" % (self.voltage_channel.get(), float(vertScaleVoltage)))
@@ -162,7 +160,6 @@ class VPulse_IV():
                 # Handling glitch points
                 prevPulserVoltage = V_s
 
-                i = i + 1
         # Convert current and voltage readings to mA and mV values
         currentData[:] = [x*1000 for x in currentData]
         voltageData[:] = [x*1000 for x in voltageData]
