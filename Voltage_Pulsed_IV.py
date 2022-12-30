@@ -94,6 +94,9 @@ class VPulse_IV():
         voltageRangeStop = float(self.stop_voltage_entry.get()) + float(self.step_size_entry.get())/1000
         voltageRangeStep = float(self.step_size_entry.get())/1000
 
+        # Obtain series resistance value from entry box
+        seriesResistance = float(self.series_resistance_entry.get())
+
         voltageSourceValues = np.arange(voltageRangeStart, voltageRangeStop, voltageRangeStep)
 
         # Lists for data values
@@ -150,9 +153,8 @@ class VPulse_IV():
                     old_trigger = self.updateTriggerCursor(voltage_ampl_osc, self.scope, totalDisplayVoltage)
                     sleep(0.75)
 
-                R_S = 50.0  # AVTECH pulser source resistance
                 current_ampl_device = 2*current_ampl_osc
-                voltage_ampl_device = voltage_ampl_osc
+                voltage_ampl_device = voltage_ampl_osc - seriesResistance*current_ampl_device
 
                 voltageData.append(voltage_ampl_device)
                 currentData.append(current_ampl_device)
@@ -308,6 +310,13 @@ class VPulse_IV():
         # Frequency entry box
         self.frequency_entry = Entry(self.pulseFrame, width=5)
         self.frequency_entry.grid(column=3, row=9, pady=(0,10))
+
+        # Series resistance label
+        self.series_resistance_label = Label(self.pulseFrame, text='Series resistance (ohms)')
+        self.series_resistance_label.grid(column=1, row=10)
+        # Series resistance entry box
+        self.series_resistance_entry = Entry(self.pulseFrame, width=5)
+        self.series_resistance_entry.grid(column=1, row=11, pady=(0,10))
 
         # Start Button
         self.start_button = Button(
