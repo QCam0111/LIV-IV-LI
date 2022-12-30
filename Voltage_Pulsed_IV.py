@@ -44,7 +44,7 @@ class VPulse_IV():
         self.scope.write(":TIMebase:RANGe %.6fus" %(0.5*pulseWidth*10))
 
         self.scope.write(":TRIGger:MODE GLITch")
-        self.scope.write(":TRIGger:GLITch:SOURce CHANnel%d" %self.current_channel.get())
+        self.scope.write(":TRIGger:GLITch:SOURce CHANnel%d" %self.trigger_channel.get())
         self.scope.write(":TRIGger:GLITch:QUALifier RANGe")
 
         # Define glitch trigger range as: [50% of PW, 150% of PW]
@@ -120,11 +120,11 @@ class VPulse_IV():
             if (prevPulserVoltage < V_glitch_1 <= V_s):
                 self.pulser.write("output off")
                 self.pulser.write("volt %.3f" %V_s)
+                prevPulserVoltage = V_s
                 sleep(3)
             else:
                 self.pulser.write("VOLT %.3f" % (V_s))
                 self.pulser.write("OUTPut ON")
-                sleep(0.1)
                 # Read current amplitude from oscilloscope; multiply by 2 to use 50-ohms channel
                 current_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.current_channel.get())[0]
 
@@ -134,6 +134,7 @@ class VPulse_IV():
                 # Update trigger cursor to three quarters of the measured current amplitude
                 totalDisplayCurrent = 6*vertScaleCurrent
                 trigger_prev = self.updateTriggerCursor(current_ampl_osc, self.scope, totalDisplayCurrent)
+                sleep(0.1)
                 
                 # Adjust vertical scales if measured amplitude reaches top of screen (99% of display)
                 while (current_ampl_osc > 0.9*totalDisplayCurrent):
@@ -142,16 +143,15 @@ class VPulse_IV():
                     self.scope.write(":CHANNEL%d:SCALe %.3f" % (self.current_channel.get(), float(vertScaleCurrent)))
                     current_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.current_channel.get())[0]
                     voltage_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.voltage_channel.get())[0]
-                    old_trigger = self.updateTriggerCursor(current_ampl_osc, self.scope, totalDisplayCurrent)
-                    sleep(0.75)
+                    trigger_prev = self.updateTriggerCursor(current_ampl_osc, self.scope, totalDisplayCurrent)
+                    sleep(0.1)
                 while (voltage_ampl_osc > 0.9*totalDisplayVoltage):
                     vertScaleVoltage = self.incrOscVertScale(vertScaleVoltage)
                     totalDisplayVoltage = 6*vertScaleVoltage
                     self.scope.write(":CHANNEL%d:SCALe %.3f" % (self.voltage_channel.get(), float(vertScaleVoltage)))
                     current_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.current_channel.get())[0]
                     voltage_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.voltage_channel.get())[0]
-                    old_trigger = self.updateTriggerCursor(voltage_ampl_osc, self.scope, totalDisplayVoltage)
-                    sleep(0.75)
+                    sleep(0.1)
 
                 current_ampl_device = 2*current_ampl_osc
                 voltage_ampl_device = voltage_ampl_osc - seriesResistance*current_ampl_device
@@ -368,11 +368,14 @@ class VPulse_IV():
         channels = [1, 2, 3, 4]
         self.current_channel = IntVar()
         self.voltage_channel = IntVar()
+        self.trigger_channel = IntVar()
 
         # Set current channel to 1
         self.current_channel.set(1)
         # Set voltage channel to 2
         self.voltage_channel.set(2)
+        # Set trigger channel to 2
+        self.trigger_channel.set(2)
 
         # Current measurement channel label
         self.curr_channel_label = Label(self.devFrame, text='Current Channel')
@@ -389,3 +392,12 @@ class VPulse_IV():
         self.voltage_channel_dropdown = OptionMenu(
             self.devFrame, self.voltage_channel, *channels)
         self.voltage_channel_dropdown.grid(column=1, row=5)
+
+
+        # Trigger channel label
+        self.trigger_channel_label = Label(self.devFrame, text='Trigger channel')
+        self.trigger_channel_label.grid(column=2, row=4)
+        # Trigger channel dropdown
+        self.trigger_channel_dropdown = OptionMenu(
+            self.devFrame, self.trigger_channel, *channels)
+        self.trigger_channel_dropdown.grid(column=2, row=5)
