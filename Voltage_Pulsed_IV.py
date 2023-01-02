@@ -55,7 +55,7 @@ class VPulse_IV():
 
         # Set initial trigger point to 1 mV
         self.scope.write("TRIGger:GLITch:LEVel 1E-3")
-        # Keep track of previous trigger level for trigger cursor control
+        # Note previous trigger level before updating the trigger cursor
         trigger_prev = 1e-3
 
         # Channel scales - set each channel to 1mV/div to start
@@ -131,10 +131,8 @@ class VPulse_IV():
                 # Read photodetector output
                 voltage_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.voltage_channel.get())[0]
 
-                # Update trigger cursor to three quarters of the measured current amplitude
-                totalDisplayCurrent = 6*vertScaleCurrent
-                trigger_prev = self.updateTriggerCursor(current_ampl_osc, self.scope, totalDisplayCurrent)
-                sleep(0.1)
+                # Update trigger cursor to three quarters of the measured amplitude
+                trigger_prev = self.updateTriggerCursor(self.scope)
                 
                 # Adjust vertical scales if measured amplitude reaches top of screen (99% of display)
                 while (current_ampl_osc > 0.9*totalDisplayCurrent):
@@ -143,15 +141,14 @@ class VPulse_IV():
                     self.scope.write(":CHANNEL%d:SCALe %.3f" % (self.current_channel.get(), float(vertScaleCurrent)))
                     current_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.current_channel.get())[0]
                     voltage_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.voltage_channel.get())[0]
-                    trigger_prev = self.updateTriggerCursor(current_ampl_osc, self.scope, totalDisplayCurrent)
-                    sleep(0.1)
+                    trigger_prev = self.updateTriggerCursor(self.scope)
                 while (voltage_ampl_osc > 0.9*totalDisplayVoltage):
                     vertScaleVoltage = self.incrOscVertScale(vertScaleVoltage)
                     totalDisplayVoltage = 6*vertScaleVoltage
                     self.scope.write(":CHANNEL%d:SCALe %.3f" % (self.voltage_channel.get(), float(vertScaleVoltage)))
                     current_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.current_channel.get())[0]
                     voltage_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.voltage_channel.get())[0]
-                    sleep(0.1)
+                    trigger_prev = self.updateTriggerCursor(self.scope)
 
                 current_ampl_device = 2*current_ampl_osc
                 voltage_ampl_device = voltage_ampl_osc - seriesResistance*current_ampl_device
@@ -378,7 +375,7 @@ class VPulse_IV():
         self.trigger_channel.set(2)
 
         # Current measurement channel label
-        self.curr_channel_label = Label(self.devFrame, text='Current Channel')
+        self.curr_channel_label = Label(self.devFrame, text='Current channel')
         self.curr_channel_label.grid(column=0, row=4)
         # Current measurement channel dropdown
         self.curr_channel_dropdown = OptionMenu(
@@ -386,7 +383,7 @@ class VPulse_IV():
         self.curr_channel_dropdown.grid(column=0, row=5)
 
         # Voltage measurement channel label
-        self.voltage_channel_label = Label(self.devFrame, text='Voltage Channel')
+        self.voltage_channel_label = Label(self.devFrame, text='Voltage channel')
         self.voltage_channel_label.grid(column=1, row=4)
         # Voltage measurement channel dropdown
         self.voltage_channel_dropdown = OptionMenu(
