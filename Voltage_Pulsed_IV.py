@@ -108,6 +108,7 @@ class VPulse_IV():
         # Handling glitch points
         prevPulserVoltage = 0
         V_glitch_1 = 7.13
+        V_glitch_2 = 21.7
 
         for V_s in voltageSourceValues:
 
@@ -116,7 +117,7 @@ class VPulse_IV():
             #    self.pulser.write("OUTPut OFF")
             #    self.pulser.write("VOLT %.3f" % V_s)
             #    sleep(1)
-            if (prevPulserVoltage < V_glitch_1 <= V_s):
+            if (prevPulserVoltage < V_glitch_1 <= V_s or prevPulserVoltage < V_glitch_2 <= V_s):
                 self.pulser.write("output off")
                 self.pulser.write("volt %.3f" %V_s)
                 prevPulserVoltage = V_s
