@@ -13,4 +13,5 @@ def updateTriggerCursor(self, pulseAmplitude, scope, totalDisplay):
         new_trigger = 0.5*totalDisplay
     scope.write(":TRIGger:GLITch:LEVel %.6f" % (new_trigger))
     sleep(0.2)
+
     return new_trigger
