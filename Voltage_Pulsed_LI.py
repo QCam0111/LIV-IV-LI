@@ -316,6 +316,13 @@ class VPulse_LI():
         self.frequency_entry = Entry(self.pulseFrame, width=5)
         self.frequency_entry.grid(column=3, row=9, pady=(0,10))
 
+        # Series resistance label
+        self.series_resistance_label = Label(self.pulseFrame, text='Series resistance (ohms)')
+        self.series_resistance_label.grid(column=1, row=10)
+        # Series resistance entry box
+        self.series_resistance_entry = Entry(self.pulseFrame, width=5)
+        self.series_resistance_entry.grid(column=1, row=11, pady=(0,10))
+
         # Start Button
         self.start_button = Button(
             self.master, text='Start', command=self.start_li_pulse)
@@ -366,14 +373,17 @@ class VPulse_LI():
         channels = [1, 2, 3, 4]
         self.current_channel = IntVar()
         self.light_channel = IntVar()
+        self.trigger_channel = IntVar()
 
         # Set current channel to 1
         self.current_channel.set(1)
         # Set light channel to 2
-        self.light_channel.set(2)
+        self.light_channel.set(3)
+        # Set trigger channel to the channel for the current waveform
+        self.trigger_channel.set(1)
 
         # Current measurement channel label
-        self.curr_channel_label = Label(self.devFrame, text='Current Channel')
+        self.curr_channel_label = Label(self.devFrame, text='Current channel')
         self.curr_channel_label.grid(column=0, row=4)
         # Current measurement channel dropdown
         self.curr_channel_dropdown = OptionMenu(
@@ -381,9 +391,17 @@ class VPulse_LI():
         self.curr_channel_dropdown.grid(column=0, row=5)
 
         # Light measurement channel label
-        self.light_channel_label = Label(self.devFrame, text='Light Channel')
+        self.light_channel_label = Label(self.devFrame, text='Light channel')
         self.light_channel_label.grid(column=1, row=4)
         # Light measurement channel dropdown
         self.light_channel_dropdown = OptionMenu(
             self.devFrame, self.light_channel, *channels)
         self.light_channel_dropdown.grid(column=1, row=5)
+
+        # Trigger channel label
+        self.trigger_channel_label = Label(self.devFrame, text='Trigger channel')
+        self.trigger_channel_label.grid(column=2, row=4)
+        # Trigger channel dropdown
+        self.trigger_channel_dropdown = OptionMenu(
+            self.devFrame, self.trigger_channel, *channels)
+        self.trigger_channel_dropdown.grid(column=2, row=5)

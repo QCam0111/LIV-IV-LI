@@ -111,12 +111,6 @@ class VPulse_IV():
         V_glitch_2 = 21.7
 
         for V_s in voltageSourceValues:
-
-            # Handle glitch issues
-            #if (V_s > 7 and V_s < 7.5) or (V_s > 21.3 and V_s < 21.9) or (V_s > 68 and V_s < 68.5):
-            #    self.pulser.write("OUTPut OFF")
-            #    self.pulser.write("VOLT %.3f" % V_s)
-            #    sleep(1)
             if (prevPulserVoltage < V_glitch_1 <= V_s or prevPulserVoltage < V_glitch_2 <= V_s):
                 self.pulser.write("output off")
                 self.pulser.write("volt %.3f" %V_s)
@@ -128,7 +122,7 @@ class VPulse_IV():
                 # Read current amplitude from oscilloscope; multiply by 2 to use 50-ohms channel
                 current_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.current_channel.get())[0]
 
-                # Read photodetector output
+                # Read voltage amplitude
                 voltage_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.voltage_channel.get())[0]
 
                 # Update trigger cursor to three quarters of the measured amplitude
@@ -137,7 +131,7 @@ class VPulse_IV():
                 elif (self.trigger_channel.get() == self.voltage_channel.get()):
                     trigger_prev = self.updateTriggerCursor(voltage_ampl_osc, self.scope, totalDisplayVoltage)
                     
-                # Adjust vertical scales if measured amplitude reaches top of screen (99% of display)
+                # Adjust vertical scales if measured amplitude reaches top of screen (90% of display)
                 while (current_ampl_osc > 0.9*totalDisplayCurrent):
                     vertScaleCurrent = self.incrOscVertScale(vertScaleCurrent)
                     totalDisplayCurrent = 6*vertScaleCurrent
@@ -353,7 +347,7 @@ class VPulse_IV():
         self.scope_address.set('Choose oscilloscope address.')
 
         # Pulser address label
-        self.pulse_label = Label(self.devFrame, text='Pulser Address')
+        self.pulse_label = Label(self.devFrame, text='Pulser address')
         self.pulse_label.grid(column=0, row=0, sticky='W')
         # Pulser address dropdown
         self.pulse_addr = OptionMenu(
@@ -362,7 +356,7 @@ class VPulse_IV():
                              padx=5, pady=5, sticky='W')
 
         # Oscilloscope address label
-        self.scope_label = Label(self.devFrame, text='Oscilloscope Address')
+        self.scope_label = Label(self.devFrame, text='Oscilloscope address')
         self.scope_label.grid(column=0, row=2, sticky='W')
         # Oscilloscope address dropdown
         self.scope_addr = OptionMenu(
@@ -398,7 +392,6 @@ class VPulse_IV():
         self.voltage_channel_dropdown = OptionMenu(
             self.devFrame, self.voltage_channel, *channels)
         self.voltage_channel_dropdown.grid(column=1, row=5)
-
 
         # Trigger channel label
         self.trigger_channel_label = Label(self.devFrame, text='Trigger channel')
