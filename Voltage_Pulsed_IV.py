@@ -17,6 +17,15 @@ from Browse_buttons import browse_plot_file, browse_txt_file
 # from Update_Trigger import updateTriggerCursor
 
 class VPulse_IV():
+    def adjustVerticalScale(self, measChannel, triggerChannel, pulseAmplitude, availableDisplay, verticalScale):
+        while (pulseAmplitude > 0.9*availableDisplay):
+            verticalScale = self.incrOscVertScale(verticalScale)
+            availableDisplay = 6*verticalScale
+            self.scope.write(":CHANNEL%d:SCALe %.3f" % (self.channel, float(verticalScale)))
+            pulseAmplitude = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.channel.get())[0]
+            if (measChannel == triggerChannel):
+                trigger_prev = self.updateTriggerCursor(pulseAmplitude, self.scope, availableDisplay)
+            return pulseAmplitude
 
     # Import Oscilloscope scaling
     from Oscilloscope_Scaling import incrOscVertScale
@@ -132,26 +141,10 @@ class VPulse_IV():
                     trigger_prev = self.updateTriggerCursor(voltage_ampl_osc, self.scope, totalDisplayVoltage)
                     
                 # Adjust vertical scales if measured amplitude reaches top of screen (90% of display)
-                while (current_ampl_osc > 0.9*totalDisplayCurrent):
-                    vertScaleCurrent = self.incrOscVertScale(vertScaleCurrent)
-                    totalDisplayCurrent = 6*vertScaleCurrent
-                    self.scope.write(":CHANNEL%d:SCALe %.3f" % (self.current_channel.get(), float(vertScaleCurrent)))
-                    current_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.current_channel.get())[0]
-                    voltage_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.voltage_channel.get())[0]
-                    if (self.trigger_channel.get() == self.current_channel.get()):
-                        trigger_prev = self.updateTriggerCursor(current_ampl_osc, self.scope, totalDisplayCurrent)
-                    elif (self.trigger_channel.get() == self.voltage_channel.get()):
-                        trigger_prev = self.updateTriggerCursor(voltage_ampl_osc, self.scope, totalDisplayVoltage)
-                while (voltage_ampl_osc > 0.9*totalDisplayVoltage):
-                    vertScaleVoltage = self.incrOscVertScale(vertScaleVoltage)
-                    totalDisplayVoltage = 6*vertScaleVoltage
-                    self.scope.write(":CHANNEL%d:SCALe %.3f" % (self.voltage_channel.get(), float(vertScaleVoltage)))
-                    current_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.current_channel.get())[0]
-                    voltage_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.voltage_channel.get())[0]
-                    if (self.trigger_channel.get() == self.current_channel.get()):
-                        trigger_prev = self.updateTriggerCursor(current_ampl_osc, self.scope, totalDisplayCurrent)
-                    elif (self.trigger_channel.get() == self.voltage_channel.get()):
-                        trigger_prev = self.updateTriggerCursor(voltage_ampl_osc, self.scope, totalDisplayVoltage)
+                current_ampl_osc = adjustVerticalScale(self, self.current_channel.get(), self.trigger_channel.get(),\
+                    current_ampl_osc, totalDisplayCurrent, vertScaleCurrent)
+                voltage_ampl_osc = adjustVerticalScale(self, self.voltage_channel.get(), self.trigger_channel.get(),\
+                    voltage_ampl_osc, totalDisplayVoltage, vertScaleVoltage)
 
                 current_ampl_device = 2*current_ampl_osc
                 voltage_ampl_device = voltage_ampl_osc - seriesResistance*current_ampl_device
