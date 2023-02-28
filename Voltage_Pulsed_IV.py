@@ -24,7 +24,7 @@ class VPulse_IV():
             self.scope.write(":CHANNEL%d:SCALe %.3f" % (self.channel, float(verticalScale)))
             pulseAmplitude = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.channel.get())[0]
             if (measChannel == triggerChannel):
-                trigger_prev = self.updateTriggerCursor(pulseAmplitude, self.scope, availableDisplay)
+                self.updateTriggerCursor(pulseAmplitude, self.scope, availableDisplay)
             return pulseAmplitude
 
     # Import Oscilloscope scaling
@@ -136,14 +136,14 @@ class VPulse_IV():
 
                 # Update trigger cursor to three quarters of the measured amplitude
                 if (self.trigger_channel.get() == self.current_channel.get()):
-                    trigger_prev = self.updateTriggerCursor(current_ampl_osc, self.scope, totalDisplayCurrent)
+                    self.updateTriggerCursor(current_ampl_osc, self.scope, totalDisplayCurrent)
                 elif (self.trigger_channel.get() == self.voltage_channel.get()):
-                    trigger_prev = self.updateTriggerCursor(voltage_ampl_osc, self.scope, totalDisplayVoltage)
+                    self.updateTriggerCursor(voltage_ampl_osc, self.scope, totalDisplayVoltage)
                     
                 # Adjust vertical scales if measured amplitude reaches top of screen (90% of display)
-                current_ampl_osc = adjustVerticalScale(self, self.current_channel.get(), self.trigger_channel.get(),\
+                current_ampl_osc = self.adjustVerticalScale(self, self.current_channel.get(), self.trigger_channel.get(),\
                     current_ampl_osc, totalDisplayCurrent, vertScaleCurrent)
-                voltage_ampl_osc = adjustVerticalScale(self, self.voltage_channel.get(), self.trigger_channel.get(),\
+                voltage_ampl_osc = self.adjustVerticalScale(self, self.voltage_channel.get(), self.trigger_channel.get(),\
                     voltage_ampl_osc, totalDisplayVoltage, vertScaleVoltage)
 
                 current_ampl_device = 2*current_ampl_osc
