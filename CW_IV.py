@@ -1,13 +1,13 @@
 import pyvisa
 from time import sleep
 import numpy as np
-from numpy import append, zeros, arange, logspace, log10
+from numpy import append, zeros, arange, logspace, log10, size
 import os
 import shutil
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from Tkinter import Label, Entry, Button, LabelFrame, Radiobutton, StringVar, IntVar, DISABLED, NORMAL
+from Tkinter import Label, Entry, Button, LabelFrame, OptionMenu, Radiobutton, StringVar, IntVar, DISABLED, NORMAL
 
 # Import Browse button functions
 from Browse_buttons import browse_plot_file, browse_txt_file
@@ -110,37 +110,22 @@ class CW_IV():
 
         fd.close()
 
-        self.generate_graph()
+        # ------------------ Plot measured characteristic ----------------------------------
 
-    """
-    Function referenced when: The IV sweep has concluded
-    Description: The results of the IV sweep will be displayed as a tk widget in the application
-    window, and also saved to the user's defined plot directory
-    """
+        fig, ax1 = plt.subplots()
+        ax1.set_xlabel('Measured device current (mA)')
+        ax1.set_ylabel('Measured device voltage (mV)')
+        ax1.plot(self.current, self.voltage_array, color='blue',
+                 label='I-V Characteristic')
+        ax1.legend(loc='upper left')
 
-    def generate_graph(self):
+        plt.show()
 
-        if self.figCanv:
-            self.figCanv.get_tk_widget().destroy()
-
-        fig1, ax1 = plt.subplots()
-        ax1.set_xlabel('Voltage (V)')
-        ax1.set_ylabel('Current (A)')
-        ax1.set_title('CW I-V', loc='center')
-        ax1.set_title(self.file_name_entry.get(), loc='right')
-
-        ax1.plot(self.voltage_array, self.current, '-o')
-        # Adjust plot to eliminate Y-axis label cutoff
-        plt.gcf().subplots_adjust(left=0.15)
-        self.fig = fig1
-
-        self.figCanv = FigureCanvasTkAgg(self.fig, master=self.plotFrame)
-        self.figCanv.draw()
-        self.figCanv.get_tk_widget().grid(column=0, row=0)
-
-        plotPath = self.plot_dir_entry.get() + '/' + self.file_name_entry.get()
-
-        fig1.savefig(plotPath)
+        try:
+            if not os.path.exists(self.plot_dir_entry.get()):
+                os.makedirs(self.plot_dir_entry.get())
+        except:
+            print('Error: Creating directory: ' + self.plot_dir_entry.get())
 
     """
     Function referenced when: setting voltage within the start_iv_sweep function
@@ -209,27 +194,10 @@ class CW_IV():
         # Assign window title and geometry
         self.master.title('CW Measurement: I-V')
 
-        # Plot frame
-        self.plotFrame = LabelFrame(self.master, text='Plot', padx=5, pady=5)
-        # Display plot frame
-        self.plotFrame.grid(column=0, row=0, rowspan=2,
-                            padx=(5, 0), pady=(0, 5))
-
-        self.fig = Figure(figsize=(5, 5), dpi=100)
-
-        y = 0
-
-        self.plot1 = self.fig.add_subplot(111)
-        self.plot1.plot(y)
-
-        self.figCanv = FigureCanvasTkAgg(self.fig, master=self.plotFrame)
-        self.figCanv.draw()
-        self.figCanv.get_tk_widget().grid(column=0, row=0)
-
         # Sweep settings frame
         self.setFrame = LabelFrame(self.master, text='Sweep Settings')
         # Display settings frame
-        self.setFrame.grid(column=1, row=0, sticky='W', padx=(10, 5))
+        self.setFrame.grid(column=0, row=0, sticky='W', padx=(10, 5), pady=(0,5))
 
         # Create plot directory label, button, and entry box
         # Plot File Label
@@ -332,26 +300,32 @@ class CW_IV():
         # Device settings frame
         self.devFrame = LabelFrame(self.master, text='Device Settings')
         # Display device settings frame
-        self.devFrame.grid(column=1, row=1, sticky='W', padx=(10, 5))
+        self.devFrame.grid(column=1, row=0, sticky='W', padx=(10, 5))
 
-        self.keithley1_label = Label(self.devFrame, text='Keithley 1 Address')
+        # Device addresses
+        connected_addresses = list(rm.list_resources())
+        # Pulser and scope variables
+        self.keithley1_address = StringVar()
+        self.keithley2_address = StringVar()
+
+        # If no devices detected
+        if size(connected_addresses) is 0:
+            connected_addresses = ['No devices detected.']
+
+        # Set the pulser and scope variables to default values
+        self.keithley1_address.set('Choose Source Keithley address.')
+        self.keithley2_address.set('Choose Measurement Keithley address.')
+
+        self.keithley1_label = Label(self.devFrame, text='Source Keithley Address')
         self.keithley1_label.grid(column=0, row=0, sticky='W')
 
-        self.keithley1_addr = Entry(self.devFrame)
+        self.keithley1_addr = OptionMenu(
+            self.devFrame, self.keithley1_address, *connected_addresses)
         self.keithley1_addr.grid(column=0, row=1, padx=5, sticky='W')
 
-        self.keithley2_label = Label(self.devFrame, text='Keithley 2 Address')
+        self.keithley2_label = Label(self.devFrame, text='Measurement Keithley Address')
         self.keithley2_label.grid(column=0, row=2, sticky='W')
-        self.keithley2_addr = Entry(self.devFrame)
+
+        self.keithley2_addr = OptionMenu(
+            self.devFrame, self.keithley2_address, *connected_addresses)
         self.keithley2_addr.grid(column=0, row=3, padx=5, sticky='W')
-
-        self.tec_label = Label(
-            self.devFrame, text='Temperature Controller Address')
-        self.tec_label.grid(column=0, row=4)
-        self.tec_addr = Entry(self.devFrame)
-        self.tec_addr.grid(column=0, row=5, padx=5, pady=(0, 5), sticky='W')
-
-        # Default values
-        self.keithley1_addr.insert(0, 'GPIB0::1::INSTR')
-        self.keithley2_addr.insert(0, 'GPIB0::2::INSTR')
-        self.tec_addr.insert(0, 'ASRL3::INSTR')
