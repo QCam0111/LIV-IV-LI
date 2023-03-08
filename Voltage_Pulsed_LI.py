@@ -17,7 +17,15 @@ from Update_Trigger import updateTriggerCursor
 rm = pyvisa.ResourceManager()
 
 class VPulse_LI():
-
+    def adjustVerticalScale(self, measChannel, triggerChannel, pulseAmplitude, availableDisplay, verticalScale):
+        while (pulseAmplitude > 0.9*availableDisplay):
+            verticalScale = self.incrOscVertScale(verticalScale)
+            availableDisplay = 6*verticalScale
+            self.scope.write(":CHANNEL%d:SCALe %.3f" % (self.channel, float(verticalScale)))
+            pulseAmplitude = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.channel.get())[0]
+            if (measChannel == triggerChannel):
+                self.updateTriggerCursor(pulseAmplitude, self.scope, availableDisplay)
+            return pulseAmplitude
     def start_li_pulse(self):
         # Range of values for vertical scale on oscilloscope
         scales = [0.001, 0.002, 0.005, 0.01, 0.02,
@@ -50,23 +58,25 @@ class VPulse_LI():
 
         # Channel scales - set each channel to 1mV/div to start
         vertScaleCurrent = 0.001
+        vertScaleLight = 0.001
         vertScaleVoltage = 0.001
 
         self.scope.write(":CHANNEL%d:SCALe %.3f" %
                          (self.current_channel.get(), vertScaleCurrent))
         self.scope.write(":CHANnel%d:DISPlay ON" % self.current_channel.get())
         self.scope.write(":CHANNEL%d:SCALe %.3f" %
-                         (self.light_channel.get(), vertScaleVoltage))
+                         (self.light_channel.get(), vertScaleLight))
         self.scope.write(":CHANnel%d:DISPlay ON" % self.light_channel.get())
 
         # Move each signal down two divisions for a better view on the screen
         self.scope.write(":CHANnel%d:OFFset %.3fV" %
                          (self.current_channel.get(), 2*vertScaleCurrent))
         self.scope.write(":CHANnel%d:OFFset %.3fV" %
-                         (self.light_channel.get(), 2*vertScaleVoltage))
+                         (self.light_channel.get(), 2*vertScaleLight))
 
         # Total mV based on 6 divisions to top of display
         totalDisplayCurrent = 6*vertScaleCurrent
+        totalDisplayLight = 6*vertScaleLight
         totalDisplayVoltage = 6*vertScaleVoltage
 
         # Connect to AVTECH Voltage Pulser
@@ -91,21 +101,26 @@ class VPulse_LI():
             voltageRangeStart, voltageRangeStop, voltageRangeStep)
 
         # Lists for data values
-        currentData = list()  # To be plotted on y-axis
-        voltageData = list()  # To be plotted on x-axis
+        currentData = list()  # To be plotted on x-axis
+        lightData = list()  # To be plotted on y-axis
 
-        i = 1
-
-        voltageData.append(0)
         currentData.append(0)
+        lightData.append(0)
+
+        # Handling glitch points
+        prevPulserVoltage = 0
+        V_glitch_1 = 7.13
+        V_glitch_2 = 21.7
+
 
         for V_s in voltageSourceValues:
 
             # Handle glitch issues
-            if (V_s > 7 and V_s < 7.5) or (V_s > 21.3 and V_s < 21.9) or (V_s > 68 and V_s < 68.5):
-                self.pulser.write("OUTPut OFF")
-                self.pulser.write("VOLT %.3f" % V_s)
-                sleep(1)
+            if (prevPulserVoltage < V_glitch_1 <= V_s or prevPulserVoltage < V_glitch_2 <= V_s):
+                self.pulser.write("output off")
+                self.pulser.write("volt %.3f" %V_s)
+                prevPulserVoltage = V_s
+                sleep(3)
             else:
                 self.pulser.write("VOLT %.3f" % (V_s))
                 self.pulser.write("OUTPut ON")
@@ -113,46 +128,38 @@ class VPulse_LI():
                 # Read current amplitude from oscilloscope; multiply by 2 to use 50-ohms channel
                 current_ampl_osc = self.scope.query_ascii_values(
                     "SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.current_channel.get())[0]
-                prev_current_amplitude = current_ampl_osc
+                # Read voltage amplitude
+                voltage_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.voltage_channel.get())[0]
                 # Read photodetector output
-                voltage_ampl_osc = self.scope.query_ascii_values(
+                light_ampl_osc = self.scope.query_ascii_values(
                     "SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.light_channel.get())[0]
-                prev_voltage_amplitude = voltage_ampl_osc
-                # Adjust vertical scales if measured amplitude reaches top of screen (99% of display)
-                if (current_ampl_osc > 0.99*totalDisplayCurrent):
-                    vertScaleCurrent = incrOscVertScale(vertScaleCurrent)
-                    totalDisplayCurrent = 6*vertScaleCurrent
-                    self.scope.write(":CHANNEL%d:SCALe %.3f" % (
-                        self.current_channel.get(), float(vertScaleCurrent)))
-                    current_ampl_osc = self.scope.query_ascii_values(
-                        "SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.current_channel.get())[0]
-                    voltage_ampl_osc = self.scope.query_ascii_values(
-                        "SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.light_channel.get())[0]
-                    sleep(0.75)
-                if (voltage_ampl_osc > 0.99*totalDisplayVoltage):
-                    vertScaleVoltage = incrOscVertScale(vertScaleVoltage)
-                    totalDisplayVoltage = 6*vertScaleVoltage
-                    self.scope.write(":CHANNEL%d:SCALe %.3f" % (
-                        self.light_channel.get(), float(vertScaleVoltage)))
-                    current_ampl_osc = self.scope.query_ascii_values(
-                        "SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.current_channel.get())[0]
-                    voltage_ampl_osc = self.scope.query_ascii_values(
-                        "SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.light_channel.get())[0]
-                    sleep(0.75)
-                # Update trigger cursor - update to VPulse_IV scheme?
-                updateTriggerCursor(current_ampl_osc, self.scope, totalDisplayCurrent)
 
-                R_S = 50.0  # AVTECH pulser source resistance
+                # Update trigger cursor to three quarters of the measured amplitude
+                if (self.trigger_channel.get() == self.current_channel.get()):
+                    self.updateTriggerCursor(current_ampl_osc, self.scope, totalDisplayCurrent)
+                elif (self.trigger_channel.get() == self.voltage_channel.get()):
+                    self.updateTriggerCursor(voltage_ampl_osc, self.scope, totalDisplayVoltage)
+                elif (self.trigger_channel.get() == self.light_channel.get()):
+                    self.updateTriggerCursor(light_ampl_osc, self.scope, totalDisplayLight)
+
+                # Adjust vertical scales if measured amplitude reaches top of screen (90% of display)
+                current_ampl_osc = self.adjustVerticalScale(self, self.current_channel.get(), self.trigger_channel.get(),\
+                    current_ampl_osc, totalDisplayCurrent, vertScaleCurrent)
+                light_ampl_osc = self.adjustVerticalScale(self, self.light_channel.get(), self.trigger_channel.get(),\
+                    light_ampl_osc, totalDisplayLight, vertScaleLight)
+                voltage_ampl_osc = self.adjustVerticalScale(self, self.voltage_channel.get(), self.trigger_channel.get(),\
+                    voltage_ampl_osc, totalDisplayVoltage, vertScaleVoltage)
+
                 current_ampl_device = 2*current_ampl_osc
-                voltage_ampl_device = voltage_ampl_osc
+                light_ampl_device = light_ampl_osc
 
-                voltageData.append(voltage_ampl_device)
+                lightData.append(light_ampl_device)
                 currentData.append(current_ampl_device)
 
                 i = i + 1
         # Convert current and voltage readings to mA and mV values
         currentData[:] = [x*1000 for x in currentData]
-        voltageData[:] = [x*1000 for x in voltageData]
+        lightData[:] = [x*1000 for x in lightData]
 
         # Turn off the pulser, and clear event registers
         self.pulser.write("OUTPut OFF")
@@ -194,8 +201,8 @@ class VPulse_LI():
 
         fig, ax1 = plt.subplots()
         ax1.set_xlabel('Measured device current (mA)')
-        ax1.set_ylabel('Measured device light output')
-        ax1.plot(currentData, voltageData, color='blue',
+        ax1.set_ylabel('Measured photodetector output (mV)')
+        ax1.plot(currentData, lightData, color='blue',
                  label='L-I Characteristic')
         ax1.legend(loc='upper left')
 
@@ -372,11 +379,14 @@ class VPulse_LI():
         # Oscilloscope channel options
         channels = [1, 2, 3, 4]
         self.current_channel = IntVar()
+        self.voltage_channel = IntVar()
         self.light_channel = IntVar()
         self.trigger_channel = IntVar()
 
         # Set current channel to 1
         self.current_channel.set(1)
+        # Set voltage channel to 2
+        self.voltage_channel.set(2)
         # Set light channel to 2
         self.light_channel.set(3)
         # Set trigger channel to the channel for the current waveform
@@ -398,10 +408,18 @@ class VPulse_LI():
             self.devFrame, self.light_channel, *channels)
         self.light_channel_dropdown.grid(column=1, row=5)
 
+        # Voltage measurement channel label
+        self.voltage_channel_label = Label(self.devFrame, text='Voltage channel')
+        self.voltage_channel_label.grid(column=2, row=4)
+        # Voltage measurement channel dropdown
+        self.voltage_channel_dropdown = OptionMenu(
+            self.devFrame, self.voltage_channel, *channels)
+        self.voltage_channel_dropdown.grid(column=2, row=5)
+
         # Trigger channel label
         self.trigger_channel_label = Label(self.devFrame, text='Trigger channel')
-        self.trigger_channel_label.grid(column=2, row=4)
+        self.trigger_channel_label.grid(column=3, row=4)
         # Trigger channel dropdown
         self.trigger_channel_dropdown = OptionMenu(
             self.devFrame, self.trigger_channel, *channels)
-        self.trigger_channel_dropdown.grid(column=2, row=5)
+        self.trigger_channel_dropdown.grid(column=3, row=5)
