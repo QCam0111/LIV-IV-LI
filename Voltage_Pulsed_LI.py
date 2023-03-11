@@ -143,11 +143,11 @@ class VPulse_LI():
                     self.updateTriggerCursor(light_ampl_osc, self.scope, totalDisplayLight)
 
                 # Adjust vertical scales if measured amplitude reaches top of screen (90% of display)
-                current_ampl_osc = self.adjustVerticalScale(self, self.current_channel.get(), self.trigger_channel.get(),\
+                self.adjustVerticalScale(self, self.current_channel.get(), self.trigger_channel.get(),\
                     current_ampl_osc, totalDisplayCurrent, vertScaleCurrent)
-                light_ampl_osc = self.adjustVerticalScale(self, self.light_channel.get(), self.trigger_channel.get(),\
+                self.adjustVerticalScale(self, self.light_channel.get(), self.trigger_channel.get(),\
                     light_ampl_osc, totalDisplayLight, vertScaleLight)
-                voltage_ampl_osc = self.adjustVerticalScale(self, self.voltage_channel.get(), self.trigger_channel.get(),\
+                self.adjustVerticalScale(self, self.voltage_channel.get(), self.trigger_channel.get(),\
                     voltage_ampl_osc, totalDisplayVoltage, vertScaleVoltage)
 
                 current_ampl_device = 2*current_ampl_osc
