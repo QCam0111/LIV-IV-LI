@@ -20,5 +20,5 @@ def adjustVerticalScale(self, measChannel, triggerChannel, pulseAmplitude, avail
         if (measChannel == triggerChannel):
             self.updateTriggerCursor(pulseAmplitude, self.scope, availableDisplay)
         else:
-            sleep(0.5) # If triggering occurs, this sleep gets included when the function is called.
+            sleep(0.1) # If triggering occurs, this sleep gets included when the function is called.
     return verticalScale
