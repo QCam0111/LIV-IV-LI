@@ -24,7 +24,7 @@ class CW_IV():
 
     def start_iv_sweep(self):
         # Connect to Keithley Source Meter
-        self.keithley = rm.open_resource(self.keithley1_addr.get())
+        self.keithley = rm.open_resource(self.keithley1_address.get())
 
         # # Enable stop button
         # self.stop_button.config(state=NORMAL)
@@ -134,7 +134,7 @@ class CW_IV():
     """
 
     def set_voltage(self, voltage):
-        keithley = rm.open_resource(self.keithley1_addr.get())
+        keithley = rm.open_resource(self.keithley1_address.get())
         keithley.delay = 0.1    # Necessary for GPIB connection?
         keithley.write("sour:func volt")
         keithley.write("sens:curr:rang:auto on")

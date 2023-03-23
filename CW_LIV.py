@@ -24,7 +24,7 @@ class CW_LIV():
 
     def start_liv_sweep(self):
         # Connect to Keithley Source Meter
-        self.keithley = rm.open_resource(self.keithley1_addr.get())
+        self.keithley = rm.open_resource(self.keithley_address.get())
 
         # # Enable stop button
         # self.stop_button.config(state=NORMAL)
@@ -42,6 +42,35 @@ class CW_LIV():
         self.keithley.write("sens:curr:prot:lev " + str(compliance))
         # Set curr measure range to auto
         self.keithley.write("sens:curr:range:auto on ")
+
+        # Connect to oscilloscope
+        self.scope = rm.open_resource(self.osc_address.get())
+        # Initialize oscilloscope
+        self.scope.write("*RST")
+        self.scope.write("*CLS")
+        self.scope.write(":CHANnel%d:IMPedance FIFTy" %self.light_channel.get())
+        self.scope.write(":TIMebase:RANGe 2E-6")
+        self.scope.write(":TRIGger:MODE GLITch")
+        self.scope.write(":TRIGger:GLITch:SOURce CHANnel%d" %
+                         self.light_channel.get())
+        self.scope.write(":TRIGger:GLITch:QUALifier RANGe")
+
+        # Set initial trigger point to 1 mV
+        self.scope.write("TRIGger:GLITch:LEVel 1E-3")
+
+        # Channel scales - set each channel to 1mV/div to start
+        vertScaleLight = 0.001
+
+        self.scope.write(":CHANNEL%d:SCALe %.3f" %
+                         (self.light_channel.get(), vertScaleLight))
+        self.scope.write(":CHANnel%d:DISPlay ON" % self.light_channel.get())
+
+        # Move each signal down two divisions for a better view on the screen
+        self.scope.write(":CHANnel%d:OFFset %.3fV" %
+                         (self.light_channel.get(), 2*vertScaleLight))
+
+        # Total mV based on 6 divisions to top of display
+        totalDisplayCurrent = 6*vertScaleLight
 
         if 'Lin' == self.radiobutton_var.get():
             # Set up Linear voltage array
@@ -82,6 +111,7 @@ class CW_LIV():
         # read
         # Create empty space vector
         self.current = zeros(len(self.voltage_array), float)
+        self.light = zeros(len(self.voltage_array), float)
         # Loop number of points
         for i in range(0, len(self.voltage_array)):
             a = self.set_voltage(round(self.voltage_array[i], 3))
@@ -89,7 +119,11 @@ class CW_LIV():
             sleep(0.1)
             # --------source-------
             b1 = eval(self.keithley.query("read?"))
+            # Read light amplitude from oscilloscope; multiply by 2 to use 50-ohms channel
+            light_ampl_osc = self.scope.query_ascii_values(
+                    "SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.light_channel.get())[0]
             self.current[i] = b1
+            self.light[i] = light_ampl_osc
 
         # finish reading
         # Turn off output
@@ -104,8 +138,9 @@ class CW_LIV():
 
         for i in range(0, len(self.voltage_array)):
             # --------IV file----------
-            fd.write(str(round(self.voltage_array[i], 5)) + ' ')
-            fd.write(str(self.current[i]))
+            fd.write(str(round(self.voltage_array[i], 5)))
+            fd.write(str(self.current[i]) + ' ')
+            fd.write(str(self.light[i]))
             fd.writelines('\n')
 
         fd.close()
@@ -114,13 +149,15 @@ class CW_LIV():
 
         fig, ax1 = plt.subplots()
         ax2 = ax1.twinx()
-        ax2.set_ylabel('Measured device current (mA)')
-        ax1.set_xlabel('Applied Voltage (V)')
-        ax1.set_ylabel('Measured light output (mW)')
+        ax2.set_ylabel('Measured device light output (W)', color='red')
+        ax1.set_xlabel('Measured device current (mA)')
+        ax1.set_ylabel('Measured device voltage (mV)', color='blue')
         ax1.plot(self.current, self.voltage_array, color='blue',
                  label='I-V Characteristic')
-        ax1.legend(loc='upper left')
+        ax2.plot(self.current, self.light, color='red',
+                 label='L-I Characteristic')
 
+        plt.tight_layout()
         plt.show()
 
         try:
@@ -136,7 +173,7 @@ class CW_LIV():
     """
 
     def set_voltage(self, voltage):
-        keithley = rm.open_resource(self.keithley1_addr.get())
+        keithley = rm.open_resource(self.keithley_address.get())
         keithley.delay = 0.1    # Necessary for GPIB connection?
         keithley.write("sour:func volt")
         keithley.write("sens:curr:rang:auto on")
@@ -303,23 +340,23 @@ class CW_LIV():
         # Device addresses
         connected_addresses = list(rm.list_resources())
         # Pulser and scope variables
-        self.keithley1_address = StringVar()
+        self.keithley_address = StringVar()
         self.osc_address = StringVar()
 
         # If no devices detected
         if size(connected_addresses) is 0:
             connected_addresses = ['No devices detected.']
 
-        # Set the pulser and scope variables to default values
-        self.keithley1_address.set('Choose Source Keithley address.')
+        # Set the keithley and scope variables to default values
+        self.keithley_address.set('Choose Keithley address.')
         self.osc_address.set('Choose Oscilloscope address.')
 
-        self.keithley1_label = Label(self.devFrame, text='Source Keithley Address')
-        self.keithley1_label.grid(column=0, row=0, sticky='W')
+        self.keithley_label = Label(self.devFrame, text='Keithley Address')
+        self.keithley_label.grid(column=0, row=0, sticky='W')
 
-        self.keithley1_addr = OptionMenu(
-            self.devFrame, self.keithley1_address, *connected_addresses)
-        self.keithley1_addr.grid(column=0, row=1, padx=5, sticky='W')
+        self.keithley_addr = OptionMenu(
+            self.devFrame, self.keithley_address, *connected_addresses)
+        self.keithley_addr.grid(column=0, row=1, padx=5, sticky='W')
 
         self.osc_label = Label(self.devFrame, text='Oscilloscope Address')
         self.osc_label.grid(column=0, row=2, sticky='W')
@@ -327,3 +364,18 @@ class CW_LIV():
         self.osc_addr = OptionMenu(
             self.devFrame, self.osc_address, *connected_addresses)
         self.osc_addr.grid(column=0, row=3, padx=5, sticky='W')
+
+        self.osc_label = Label(self.devFrame, text='Oscilloscope Light Channel')
+        self.osc_label.grid(column=0, row=4, sticky='W')
+
+        # Oscilloscope channel options
+        channels = [1, 2, 3, 4]
+
+        self.light_channel = IntVar()
+        # Set light channel to 1
+        self.light_channel.set(1)
+
+        # Light measurement channel dropdown
+        self.light_channel_dropdown = OptionMenu(
+            self.devFrame, self.light_channel, *channels)
+        self.light_channel_dropdown.grid(column=0, row=5, padx=5, pady=(0,5), sticky='W')
