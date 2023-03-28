@@ -11,6 +11,8 @@ from Tkinter import Label, Entry, Button, LabelFrame, OptionMenu, Radiobutton, S
 
 # Import Browse button functions
 from Browse_buttons import browse_plot_file, browse_txt_file
+# Import Oscilloscope scaling
+from Oscilloscope_Scaling import incrOscVertScale
 
 rm = pyvisa.ResourceManager()
 
@@ -50,13 +52,6 @@ class CW_LIV():
         self.scope.write("*CLS")
         self.scope.write(":CHANnel%d:IMPedance FIFTy" %self.light_channel.get())
         self.scope.write(":TIMebase:RANGe 2E-6")
-        self.scope.write(":TRIGger:MODE GLITch")
-        self.scope.write(":TRIGger:GLITch:SOURce CHANnel%d" %
-                         self.light_channel.get())
-        self.scope.write(":TRIGger:GLITch:QUALifier RANGe")
-
-        # Set initial trigger point to 1 mV
-        self.scope.write("TRIGger:GLITch:LEVel 1E-3")
 
         # Channel scales - set each channel to 1mV/div to start
         vertScaleLight = 0.001
@@ -65,7 +60,7 @@ class CW_LIV():
                          (self.light_channel.get(), vertScaleLight))
         self.scope.write(":CHANnel%d:DISPlay ON" % self.light_channel.get())
 
-        # Move each signal down two divisions for a better view on the screen
+        # Move signal down two divisions for a better view on the screen
         self.scope.write(":CHANnel%d:OFFset %.3fV" %
                          (self.light_channel.get(), 2*vertScaleLight))
 
@@ -118,11 +113,19 @@ class CW_LIV():
             # Delay time between sweeping
             sleep(0.1)
             # --------source-------
-            b1 = eval(self.keithley.query("read?"))
             # Read light amplitude from oscilloscope; multiply by 2 to use 50-ohms channel
+            self.current[i] = eval(self.keithley.query("read?"))
             light_ampl_osc = self.scope.query_ascii_values(
-                    "SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.light_channel.get())[0]
-            self.current[i] = b1
+                    "SINGLE;*OPC;:MEASure:VMAX? CHANNEL%d" % self.light_channel.get())[0]
+
+            # Adjust vertical scales if measured amplitude reaches top of screen (90% of display)
+            while (light_ampl_osc > 0.9*totalDisplayCurrent):
+                vertScaleLight = incrOscVertScale(vertScaleLight)
+                totalDisplayCurrent = 6*vertScaleLight
+                self.scope.write(":CHANNEL%d:SCALe %.3f" % (self.light_channel.get(), float(vertScaleLight)))
+                light_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VMAX? CHANNEL%d" % self.light_channel.get())[0]
+            
+            # Store light reading in self.light
             self.light[i] = light_ampl_osc
 
         # finish reading
