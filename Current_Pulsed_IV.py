@@ -82,9 +82,8 @@ class IPulse_IV():
 
         # Calculate number of points based on step size
         currentRangeStart = float(self.start_current_entry.get())
-        currentRangeStop = float(
-            self.stop_current_entry.get()) + float(self.step_size_entry.get())/1000
-        currentRangeStep = float(self.step_size_entry.get())/1000
+        currentRangeStop = float(self.stop_current_entry.get()) + float(self.step_size_entry.get())
+        currentRangeStep = float(self.step_size_entry.get())
 
         currentSourceValues = np.arange(
             currentRangeStart, currentRangeStop, currentRangeStep)
