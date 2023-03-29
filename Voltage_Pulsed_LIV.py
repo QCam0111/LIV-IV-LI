@@ -14,10 +14,15 @@ from Tkinter import Label, Entry, Button, LabelFrame, OptionMenu, Radiobutton, S
 from Browse_buttons import browse_plot_file, browse_txt_file
 # Import Oscilloscope scaling
 from Oscilloscope_Scaling import incrOscVertScale
+# Import trigger updating
+from Update_Trigger import updateTriggerCursor
 
 rm = pyvisa.ResourceManager()
 
 class VPulse_LIV():
+
+    # Import vertical scaling
+    from adjustVerticalScale import adjustVerticalScale
 
     def start_liv_pulse(self):
 
@@ -127,19 +132,19 @@ class VPulse_LIV():
                 light_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.light_channel.get())[0]
                 # Update trigger cursor if it being applied to the current waveform
                 if (self.trigger_channel.get() == self.light_channel.get()):
-                    self.updateTriggerCursor(light_ampl_osc, self.scope, totalDisplayLight)
+                    updateTriggerCursor(light_ampl_osc, self.scope, totalDisplayLight)
 
                 # Read current amplitude from oscilloscope; multiply by 2 to use 50-ohms channel
                 current_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.current_channel.get())[0]
                 # Update trigger cursor if it being applied to the current waveform
                 if (self.trigger_channel.get() == self.current_channel.get()):
-                    self.updateTriggerCursor(current_ampl_osc, self.scope, totalDisplayCurrent)
+                    updateTriggerCursor(current_ampl_osc, self.scope, totalDisplayCurrent)
 
                 # Read voltage amplitude
                 voltage_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.voltage_channel.get())[0]
                 # Update trigger cursor if it being applied to the current waveform
                 if (self.trigger_channel.get() == self.voltage_channel.get()):
-                    self.updateTriggerCursor(voltage_ampl_osc, self.scope, totalDisplayVoltage)
+                    updateTriggerCursor(voltage_ampl_osc, self.scope, totalDisplayVoltage)
                     
                 # Adjust vertical scales if measured amplitude reaches top of screen (90% of display)
                 vertScaleLight = self.adjustVerticalScale(self.light_channel.get(), self.trigger_channel.get(),\
@@ -221,6 +226,7 @@ class VPulse_LIV():
         ax1.legend(loc='upper left')
 
         plt.tight_layout()
+        plt.savefig(self.plot_dir_entry.get() + '/' + self.file_name_entry.get() + ".png")
         plt.show()
 
         try:

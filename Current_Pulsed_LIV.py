@@ -12,14 +12,17 @@ from Tkinter import Label, Entry, Button, LabelFrame, OptionMenu, Radiobutton, S
 
 # Import Browse button functions
 from Browse_buttons import browse_plot_file, browse_txt_file
-# Import Oscilloscope scaling
-from Oscilloscope_Scaling import incrOscVertScale
+# # Import Oscilloscope scaling
+# from Oscilloscope_Scaling import incrOscVertScale
+
 # Import trigger updating
 from Update_Trigger import updateTriggerCursor
 
 rm = pyvisa.ResourceManager()
 
 class IPulse_LIV():
+    # Import function for adjusting vertical scales in oscilloscope
+    from adjustVerticalScale import adjustVerticalScale
 
     def start_liv_pulse(self):
 
@@ -31,8 +34,10 @@ class IPulse_LIV():
         self.scope.write(":CHANnel%d:IMPedance FIFTy" %self.light_channel.get())
         self.scope.write(":CHANnel%d:IMPedance FIFTy" %self.current_channel.get())
         self.scope.write(":CHANnel%d:IMPedance FIFTy" %self.voltage_channel.get())
-        # self.scope.write(":AUToscale")
-        self.scope.write(":TIMebase:RANGe 2E-6")
+
+        pulseWidth = float(self.pulse_width_entry.get())
+        # Mulitplication by 10 is due to a peculiarty of this oscilloscope
+        self.scope.write(":TIMebase:RANGe %.6fus" %(0.5*pulseWidth*10))
         self.scope.write(":TRIGger:MODE GLITch")
         self.scope.write(":TRIGger:GLITch:SOURce CHANnel%d" %self.trigger_channel.get())
         self.scope.write(":TRIGger:GLITch:QUALifier RANGe")
@@ -43,12 +48,12 @@ class IPulse_LIV():
         self.scope.write(":TRIGger:GLITch:RANGe %.6fus,%.6fus" %(glitchTriggerLower,glitchTriggerUpper))
 
         # Set initial trigger point to 1 mV
-        self.scope.write("TRIGger:GLITch:LEVel 1E-3")
+        self.scope.write("TRIGger:GLITch:LEVel 8E-3")
 
         # Channel scales - set each channel to 1mV/div to start
         vertScaleLight = 0.001
-        vertScaleCurrent = 0.001
-        vertScaleVoltage = 0.001
+        vertScaleCurrent = 0.002
+        vertScaleVoltage = 0.002
 
         # Initial scale for light channel 
         self.scope.write(":CHANNEL%d:SCALe %.3f" %(self.light_channel.get(), vertScaleLight))
@@ -104,48 +109,44 @@ class IPulse_LIV():
             self.pulser.write(":LDI %.3f" % (I_s))
             self.pulser.write("OUTPut ON")
             sleep(0.1)
+
             # Read light amplitude from oscilloscope
             light_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.light_channel.get())[0]
             # Update trigger cursor if it being applied to the current waveform
             if (self.trigger_channel.get() == self.light_channel.get()):
-                self.updateTriggerCursor(light_ampl_osc, self.scope, totalDisplayLight)
+                updateTriggerCursor(light_ampl_osc, self.scope, totalDisplayLight)
 
             # Read current amplitude from oscilloscope; multiply by 2 to use 50-ohms channel
             current_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.current_channel.get())[0]
             # Update trigger cursor if it being applied to the current waveform
             if (self.trigger_channel.get() == self.current_channel.get()):
-                self.updateTriggerCursor(current_ampl_osc, self.scope, totalDisplayCurrent)
+                updateTriggerCursor(current_ampl_osc, self.scope, totalDisplayCurrent)
 
             # Read voltage amplitude
             voltage_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.voltage_channel.get())[0]
             # Update trigger cursor if it being applied to the current waveform
             if (self.trigger_channel.get() == self.voltage_channel.get()):
-                self.updateTriggerCursor(voltage_ampl_osc, self.scope, totalDisplayVoltage)
+                updateTriggerCursor(voltage_ampl_osc, self.scope, totalDisplayVoltage)
 
-            # Adjust vertical scales if measured amplitude reaches top of screen (99% of display)
-            while (light_ampl_osc > 0.99*totalDisplayCurrent):
-                vertScaleLight = incrOscVertScale(vertScaleLight)
-                totalDisplayLight = 6*vertScaleLight
-                self.scope.write(":CHANNEL%d:SCALe %.3f" % (
-                    self.light_channel.get(), float(vertScaleLight)))
-                light_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.light_channel.get())[0]
+            # Adjust vertical scales if measured amplitude reaches top of screen (90% of display)
+            vertScaleLight = self.adjustVerticalScale(self.light_channel.get(), self.trigger_channel.get(),\
+                light_ampl_osc, totalDisplayLight, vertScaleLight)
+            vertScaleCurrent = self.adjustVerticalScale(self.current_channel.get(), self.trigger_channel.get(),\
+                current_ampl_osc, totalDisplayCurrent, vertScaleCurrent)
+            vertScaleVoltage = self.adjustVerticalScale(self.voltage_channel.get(), self.trigger_channel.get(),\
+                voltage_ampl_osc, totalDisplayVoltage, vertScaleVoltage)
 
-            # Adjust vertical scales if measured amplitude reaches top of screen (99% of display)
-            while (current_ampl_osc > 0.99*totalDisplayCurrent):
-                vertScaleCurrent = incrOscVertScale(vertScaleCurrent)
-                totalDisplayCurrent = 6*vertScaleCurrent
-                self.scope.write(":CHANNEL%d:SCALe %.3f" % (
-                    self.current_channel.get(), float(vertScaleCurrent)))
-                current_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.current_channel.get())[0]
-                sleep(0.75)
-                
-            while (voltage_ampl_osc > 0.99*totalDisplayVoltage):
-                vertScaleVoltage = incrOscVertScale(vertScaleVoltage)
-                totalDisplayVoltage = 6*vertScaleVoltage
-                self.scope.write(":CHANNEL%d:SCALe %.3f" % (
-                    self.voltage_channel.get(), float(vertScaleVoltage)))
-                voltage_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.voltage_channel.get())[0]
-                sleep(0.75)
+            # Measure amplitudes again
+            light_ampl_osc = self.scope.query_ascii_values(
+                "SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.light_channel.get())[0]
+            current_ampl_osc = self.scope.query_ascii_values(
+                "SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.current_channel.get())[0]
+            voltage_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.voltage_channel.get())[0]
+
+            # Update available display space for each variable
+            totalDisplayCurrent = 6*vertScaleCurrent
+            totalDisplayLight = 6*vertScaleLight
+            totalDisplayVoltage = 6*vertScaleVoltage 
 
             R_S = 50.0  # AVTECH pulser source resistance
 
@@ -188,8 +189,10 @@ class IPulse_LIV():
 
         f = open(filesave2, 'w+')
         f.writelines('\n')
-        f.writelines('Current (mA), Voltage (mV)\n')
+        f.writelines('Light Output (W), Current (mA), Voltage (mV)\n')
         for i in range(0, len(currentData)):
+            f.writelines(str(lightData[i]))
+            f.writelines(' ')
             f.writelines(str(currentData[i]))
             f.writelines(' ')
             f.writelines(str(voltageData[i]))

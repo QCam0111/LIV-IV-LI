@@ -18,7 +18,7 @@ class VPulse_LI():
     from Oscilloscope_Scaling import incrOscVertScale
     # Import trigger updating
     from Update_Trigger import updateTriggerCursor
-        # Import function for adjusting vertical scales in oscilloscope
+    # Import function for adjusting vertical scales in oscilloscope
     from adjustVerticalScale import adjustVerticalScale
 
     def start_li_pulse(self):

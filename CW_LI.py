@@ -1,16 +1,16 @@
 import pyvisa
-from time import sleep
+from time import sleep, strftime
 import numpy as np
-from numpy import append, zeros, arange, logspace, log10
+from numpy import append, zeros, arange, logspace, log10, size
 import os
 import shutil
 import matplotlib.pyplot as plt
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from Tkinter import Label, Entry, Button, LabelFrame, Radiobutton, StringVar, IntVar, DISABLED, NORMAL
+from Tkinter import Label, Entry, Button, LabelFrame, OptionMenu, Radiobutton, StringVar, IntVar, DISABLED, NORMAL
 
 # Import Browse button functions
 from Browse_buttons import browse_plot_file, browse_txt_file
+# Import Oscilloscope scaling
+from Oscilloscope_Scaling import incrOscVertScale
 
 rm = pyvisa.ResourceManager()
 
@@ -24,10 +24,7 @@ class CW_LI():
 
     def start_li_cw(self):
         # Connect to Keithley for applying CW current
-        self.keithleySource = rm.open_resource(self.keithleyS_addr.get())
-
-        # # Enable stop button
-        # self.stop_button.config(state=NORMAL)
+        self.keithleySource = rm.open_resource(self.keithley_address.get())
 
         # Reset GPIB defaults
         self.keithleySource.write("*rst; status:preset; *cls")
@@ -36,12 +33,33 @@ class CW_LI():
         # Set source level to 0A
         self.keithleySource.write("sour:curr 0")
         # Set sensor to voltage
-        self.keithleySource.write("sens:func 'volt'")
+        self.keithleySource.write("sens:func 'curr'")
         # Set voltage compliance
         compliance = float(self.compliance_entry.get())/1000
-        self.keithleySource.write("sens:volt:prot:lev " + str(compliance))
+        self.keithleySource.write("sens:curr:prot:lev " + str(compliance))
         # Set voltage measure range to auto
-        self.keithleySource.write("sens:volt:range:auto on ")
+        self.keithleySource.write("sens:curr:range:auto on ")
+        
+        # Connect to oscilloscope
+        self.scope = rm.open_resource(self.scope_address.get())
+        # Initialize oscilloscope
+        self.scope.write("*RST")
+        self.scope.write("*CLS")
+        self.scope.write(":CHANnel%d:IMPedance FIFTy" %self.light_channel.get())
+        self.scope.write(":TIMebase:RANGe 2E-6")
+
+        # Channel scales - set each channel to 1mV/div to start
+        vertScaleLight = 0.001
+
+        self.scope.write(":CHANNEL%d:SCALe %.3f" %(self.light_channel.get(), vertScaleLight))
+        self.scope.write(":CHANnel%d:DISPlay ON" % self.light_channel.get())
+
+        # Move signal down two divisions for a better view on the screen
+        self.scope.write(":CHANnel%d:OFFset %.3fV" %
+                         (self.light_channel.get(), 2*vertScaleLight))
+
+        # Total mV based on 6 divisions to top of display
+        totalDisplayCurrent = 6*vertScaleLight
 
         if 'Lin' == self.radiobutton_var.get():
             # Set up Linear current array
@@ -63,15 +81,31 @@ class CW_LI():
 
         # read
         # Create empty space vector
-        self.voltage = zeros(len(self.current_array), float)
+        self.current = zeros(len(self.current_array), float)
+        self.light = zeros(len(self.current_array), float)
         # Loop number of points
         for i in range(0, len(self.current_array)):
             a = self.set_current(round(self.current_array[i], 3))
             # Delay time between sweeping
             sleep(0.1)
             # --------source-------
-            b1 = eval(self.keithleySource.query("read?"))
-            self.voltage[i] = b1
+            
+            # Read light amplitude from oscilloscope; multiply by 2 to use 50-ohms channel
+            self.current[i] = eval(self.keithley.query("read?"))
+            light_ampl_osc = self.scope.query_ascii_values(
+                    "SINGLE;*OPC;:MEASure:VMAX? CHANNEL%d" % self.light_channel.get())[0]
+            
+            # Adjust vertical scales if measured amplitude reaches top of screen (90% of display)
+            while (light_ampl_osc > 0.9*totalDisplayCurrent):
+                vertScaleLight = incrOscVertScale(vertScaleLight)
+                totalDisplayCurrent = 6*vertScaleLight
+                self.scope.write(":CHANNEL%d:SCALe %.3f" % (self.light_channel.get(), float(vertScaleLight)))
+                light_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VMAX? CHANNEL%d" % self.light_channel.get())[0]
+            
+            # Store light reading in self.light
+            self.light[i] = light_ampl_osc
+            # Store current reading in self.current
+            self.current[i] = eval(self.keithleySource.query("read?"))
 
         # finish reading
         # Turn off output
@@ -85,43 +119,30 @@ class CW_LI():
         i = 1
 
         for i in range(0, len(self.current_array)):
-            # --------IV file----------
+            # --------LI file----------
             fd.write(str(round(self.current_array[i], 5)) + ' ')
-            fd.write(str(self.voltage[i]))
+            fd.write(str(self.light[i]))
             fd.writelines('\n')
 
         fd.close()
 
-        self.generate_graph()
-    """
-    Function referenced when: The LI sweep has concluded
-    Description: The results of the LI sweep will be displayed as a tk widget in the application
-    window, and also saved to the user's defined plot directory
-    """
+        # ------------------ Plot measured characteristic ----------------------------------
 
-    def generate_graph(self):
+        fig, ax1 = plt.subplots()
+        ax1.set_xlabel('Measured device current (mA)')
+        ax1.set_ylabel('Measured device light output (W)')
+        ax1.plot(self.current, self.light, color='blue', label='L-I Characteristic')
+        ax1.legend(loc='upper left')
 
-        if self.figCanv:
-            self.figCanv.get_tk_widget().destroy()
+        plt.tight_layout()
+        plt.savefig(self.plot_dir_entry.get() + '/' + self.file_name_entry.get() + ".png")
+        plt.show()
 
-        fig1, ax1 = plt.subplots()
-        ax1.set_xlabel('I (A)')
-        ax1.set_ylabel('L (mW)')
-        ax1.set_title('CW L-I', loc='center')
-        ax1.set_title(self.file_name_entry.get(), loc='right')
-
-        ax1.plot(self.current_array, self.voltage, '-o')
-        # Adjust plot to eliminate Y-axis label cutoff
-        plt.gcf().subplots_adjust(left=0.15)
-        self.fig = fig1
-
-        self.figCanv = FigureCanvasTkAgg(self.fig, master=self.plotFrame)
-        self.figCanv.draw()
-        self.figCanv.get_tk_widget().grid(column=0, row=0)
-
-        plotPath = self.plot_dir_entry.get() + '/' + self.file_name_entry.get()
-
-        fig1.savefig(plotPath)
+        try:
+            if not os.path.exists(self.plot_dir_entry.get()):
+                os.makedirs(self.plot_dir_entry.get())
+        except:
+            print('Error: Creating directory: ' + self.plot_dir_entry.get())
 
     """
     Function referenced when: Setting current within the start_li_sweep function
@@ -130,24 +151,17 @@ class CW_LI():
     """
 
     def set_current(self, current):
-        keithley = rm.open_resource(self.keithleyS_addr.get())
-        keithley.delay = 0.1    # Necessary for GPIB connection?
-        keithley.write("sour:func curr")
+        keithley = rm.open_resource(self.keithley_address.get())
+        keithley.write("sour:func 'curr'")
         keithley.write("sens:volt:rang:auto on")
-        keithley.write("sens:func 'volt'")
-        keithley.write("form:elem volt")
+        keithley.write("sens:func 'curr'")
+        keithley.write("form:elem curr")
         keithley.write("outp on")
         keithley.write("sour:curr:lev " + str(current))
         # For L-I not reading the voltage
         volt = keithley.query('READ?')
 
         return volt
-
-    # Implement multi-threading to allow the use of the main window while running a sweep
-    # def stop_pressed(self):
-    #     self.keithley.write('outp off')
-    #     self.stop_button.config(state=DISABLED)
-    #     # Return from function
 
     """
     Function referenced when: Lin radiobutton is selected
@@ -181,26 +195,10 @@ class CW_LI():
         # Assign window title and geometry
         self.master.title('CW Measurement: L-I')
 
-        # Plot frame
-        self.plotFrame = LabelFrame(self.master, text='Plot', padx=5, pady=5)
-        # Display plot frame
-        self.plotFrame.grid(column=0, row=0, rowspan=2)
-
-        self.fig = Figure(figsize=(5, 5), dpi=100)
-
-        y = 0
-
-        self.plot1 = self.fig.add_subplot(111)
-        self.plot1.plot(y)
-
-        self.figCanv = FigureCanvasTkAgg(self.fig, master=self.plotFrame)
-        self.figCanv.draw()
-        self.figCanv.get_tk_widget().grid(column=0, row=0)
-
         # Sweep settings frame
         self.setFrame = LabelFrame(self.master, text='Sweep Settings')
         # Display settings frame
-        self.setFrame.grid(column=1, row=0, sticky='W', padx=(10, 5))
+        self.setFrame.grid(column=0, row=0, sticky='W', padx=(10, 5))
 
         # Create plot directory label, button, and entry box
         # Plot File Label
@@ -299,21 +297,51 @@ class CW_LI():
         # Device settings frame
         self.devFrame = LabelFrame(self.master, text='Device Settings')
         # Display device settings frame
-        self.devFrame.grid(column=1, row=1, sticky='W', padx=(10, 5), ipady=3)
+        self.devFrame.grid(column=1, row=0, sticky='N', padx=(10, 5))
 
-        self.keithleyS_label = Label(
-            self.devFrame, text='Keithley Source Address')
-        self.keithleyS_label.grid(column=0, row=0, sticky='W')
+        # Device addresses
+        connected_addresses = list(rm.list_resources())
+        # Keithley and scope variables
+        self.keithley_address = StringVar()
+        self.scope_address = StringVar()
 
-        self.keithleyS_addr = Entry(self.devFrame)
-        self.keithleyS_addr.grid(column=0, row=1, padx=5, sticky='W')
+        # If no devices detected
+        if size(connected_addresses) is 0:
+            connected_addresses = ['No devices detected.']
 
-        self.keithleyM_label = Label(
-            self.devFrame, text='Keithley Measurement Address')
-        self.keithleyM_label.grid(column=0, row=2, sticky='W')
-        self.keithleyM_addr = Entry(self.devFrame)
-        self.keithleyM_addr.grid(column=0, row=3, padx=5, sticky='W')
+        # Set the pulser and scope variables to default values
+        self.keithley_address.set('Choose pulser address.')
+        self.scope_address.set('Choose oscilloscope address.')
 
-        # Default values
-        self.keithleyS_addr.insert(0, 'GPIB0::1::INSTR')
-        self.keithleyM_addr.insert(0, 'GPIB0::2::INSTR')
+        # Keithley address label
+        self.keithley_label = Label(self.devFrame, text='Keithley Address')
+        self.keithley_label.grid(column=0, row=0, sticky='W')
+        # Keithley address dropdown
+        self.keithley_addr = OptionMenu(
+            self.devFrame, self.keithley_address, *connected_addresses)
+        self.keithley_addr.grid(column=0, columnspan=2, row=1,
+                             padx=5, pady=5, sticky='W')
+
+        # Oscilloscope address label
+        self.scope_label = Label(self.devFrame, text='Oscilloscope Address')
+        self.scope_label.grid(column=0, row=2, sticky='W')
+        # Oscilloscope address dropdown
+        self.scope_addr = OptionMenu(
+            self.devFrame, self.scope_address, *connected_addresses)
+        self.scope_addr.grid(column=0, columnspan=2, row=3,
+                             padx=5, pady=5, sticky='W')
+
+        # Oscilloscope channel options
+        channels = [1, 2, 3, 4]
+        self.light_channel = IntVar()
+
+        # Set light channel to 1
+        self.light_channel.set(1)
+
+        # Light measurement channel label
+        self.light_channel_label = Label(self.devFrame, text='Light channel')
+        self.light_channel_label.grid(column=0, row=4)
+        # Light measurement channel dropdown
+        self.light_channel_dropdown = OptionMenu(
+            self.devFrame, self.light_channel, *channels)
+        self.light_channel_dropdown.grid(column=0, row=5)

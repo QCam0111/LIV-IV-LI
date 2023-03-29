@@ -5,8 +5,8 @@ Description: Updates the oscilloscope trigger level to between 25% and 90% of th
 
 from time import sleep
 
-def updateTriggerCursor(self, pulseAmplitude, scope, totalDisplay):
-    new_trigger = 3*pulseAmplitude/4.0
+def updateTriggerCursor(pulseAmplitude, scope, totalDisplay):
+    new_trigger = 3*pulseAmplitude/4
     if (new_trigger < 0.1*totalDisplay):
         new_trigger = 0.1*totalDisplay
     elif (new_trigger > 0.9*totalDisplay):
