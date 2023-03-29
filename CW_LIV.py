@@ -155,10 +155,8 @@ class CW_LIV():
         ax2.set_ylabel('Measured device light output (W)', color='red')
         ax1.set_xlabel('Measured device current (mA)')
         ax1.set_ylabel('Measured device voltage (mV)', color='blue')
-        ax1.plot(self.current, self.voltage_array, color='blue',
-                 label='I-V Characteristic')
-        ax2.plot(self.current, self.light, color='red',
-                 label='L-I Characteristic')
+        ax1.plot(self.current, self.voltage_array, color='blue', label='I-V Characteristic')
+        ax2.plot(self.current, self.light, color='red', label='L-I Characteristic')
 
         plt.tight_layout()
         plt.show()
