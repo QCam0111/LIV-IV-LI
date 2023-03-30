@@ -37,18 +37,21 @@ class IPulse_LIV():
 
         pulseWidth = float(self.pulse_width_entry.get())
         # Mulitplication by 10 is due to a peculiarty of this oscilloscope
-        self.scope.write(":TIMebase:RANGe %.6fus" %(0.5*pulseWidth*10))
-        self.scope.write(":TRIGger:MODE GLITch")
-        self.scope.write(":TRIGger:GLITch:SOURce CHANnel%d" %self.trigger_channel.get())
-        self.scope.write(":TRIGger:GLITch:QUALifier RANGe")
+        self.scope.write(":TIMebase:RANGe %.6fus" %(2*pulseWidth*10))
+        self.scope.write(":TRIGger:MODE EDGE")
+        self.scope.write(":TRIGger:EDGE:SOURce CHANnel%d" %self.trigger_channel.get())
+        self.scope.write(":TRIGger:LEVel:ASETup")
+        # self.scope.write(":TRIGger:MODE GLITch")
+        # self.scope.write(":TRIGger:GLITch:SOURce CHANnel%d" %self.trigger_channel.get())
+        # self.scope.write(":TRIGger:GLITch:QUALifier RANGe")
 
-        # Define glitch trigger range as: [50% of PW, 150% of PW]
-        glitchTriggerLower = float(self.pulse_width_entry.get())*0.5
-        glitchTriggerUpper = float(self.pulse_width_entry.get())*1.5
-        self.scope.write(":TRIGger:GLITch:RANGe %.6fus,%.6fus" %(glitchTriggerLower,glitchTriggerUpper))
+        # # Define glitch trigger range as: [50% of PW, 150% of PW]
+        # glitchTriggerLower = float(self.pulse_width_entry.get())*0.5
+        # glitchTriggerUpper = float(self.pulse_width_entry.get())*1.5
+        # self.scope.write(":TRIGger:GLITch:RANGe %.6fus,%.6fus" %(glitchTriggerLower,glitchTriggerUpper))
 
-        # Set initial trigger point to 1 mV
-        self.scope.write("TRIGger:GLITch:LEVel 8E-3")
+        # # Set initial trigger point to 1 mV
+        # self.scope.write("TRIGger:GLITch:LEVel 8E-3")
 
         # Channel scales - set each channel to 1mV/div to start
         vertScaleLight = 0.001
@@ -107,8 +110,13 @@ class IPulse_LIV():
         for I_s in currentSourceValues:
 
             self.pulser.write(":LDI %.3f" % (I_s))
+            if (self.pulser.query(":LDI?") != I_s):
+                self.pulser.write(":LDI %.3f" % (I_s))
+                sleep(1)
             self.pulser.write("OUTPut ON")
             sleep(0.1)
+
+            self.scope.write(":TRIGger:LEVel:ASETup")
 
             # Read light amplitude from oscilloscope
             light_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.light_channel.get())[0]

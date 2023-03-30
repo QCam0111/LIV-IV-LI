@@ -14,14 +14,12 @@ from Browse_buttons import browse_plot_file, browse_txt_file
 # Import Oscilloscope scaling
 # from Oscilloscope_Scaling import incrOscVertScale
 # Import trigger updating
-# from Update_Trigger import updateTriggerCursor
+from Update_Trigger import updateTriggerCursor
 
 class VPulse_IV():
 
     # Import Oscilloscope scaling
     from Oscilloscope_Scaling import incrOscVertScale
-    # Import trigger updating
-    from Update_Trigger import updateTriggerCursor
     # Import function for adjusting vertical scales in oscilloscope
     from adjustVerticalScale import adjustVerticalScale
 
@@ -125,13 +123,13 @@ class VPulse_IV():
                 current_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.current_channel.get())[0]
                 # Update trigger cursor if it being applied to the current waveform
                 if (self.trigger_channel.get() == self.current_channel.get()):
-                    self.updateTriggerCursor(current_ampl_osc, self.scope, totalDisplayCurrent)
+                    updateTriggerCursor(current_ampl_osc, self.scope, totalDisplayCurrent)
 
                 # Read voltage amplitude
                 voltage_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.voltage_channel.get())[0]
                 # Update trigger cursor if it being applied to the current waveform
                 if (self.trigger_channel.get() == self.voltage_channel.get()):
-                    self.updateTriggerCursor(voltage_ampl_osc, self.scope, totalDisplayVoltage)
+                    updateTriggerCursor(voltage_ampl_osc, self.scope, totalDisplayVoltage)
                     
                 # Adjust vertical scales if measured amplitude reaches top of screen (90% of display)
                 vertScaleCurrent = self.adjustVerticalScale(self.current_channel.get(), self.trigger_channel.get(),\
