@@ -170,29 +170,20 @@ class VPulse_IV():
         except:
             print('Error: Creating directory: '+self.txt_dir_entry.get())
 
-        filename = strftime("%Y%m%d_%HH%MM") + '.txt'
-        filesave1 = os.path.join(self.txt_dir_entry.get(), filename)
-        filesave2 = os.path.join(self.txt_dir_entry.get(
-        ), 'no' + self.file_name_entry.get()+'.txt')
+        # open file and write in data
+        txtDir = self.txt_dir_entry.get()
+        name = self.file_name_entry.get()
+        filepath = os.path.join(txtDir + '/' + name + '.txt')
+        fd = open(filepath, 'w+')
         i = 1
 
-        while(os.path.exists(filesave2)):
-            filesave2 = os.path.join(self.txt_dir_entry.get(
-            ), 'no' + self.file_name_entry.get()+str(i)+'.txt')
-            i = i+1
-
-        f = open(filesave2, 'w+')
-        f.writelines('\n')
-        f.writelines('Current (mA), Voltage (mV)\n')
+        fd.writelines('Device current (mA)\tDevice voltage (mV)\n')
         for i in range(0, len(currentData)):
-            f.writelines(str(currentData[i]))
-            f.writelines(' ')
-            f.writelines(str(voltageData[i]))
-            f.writelines('\r\n')
-        f.close()
-        print(filesave2)
-        print(filesave1)
-        shutil.copy(filesave2, filesave1)
+            # --------LI file----------
+            fd.write(str(round(currentData[i], 5)) + '\t')
+            fd.write(str(voltageData[i]))
+            fd.writelines('\n')
+        fd.close()
 
         # ------------------ Plot measured characteristic ----------------------------------
 
@@ -203,6 +194,8 @@ class VPulse_IV():
                  label='I-V Characteristic')
         ax1.legend(loc='upper left')
 
+        plt.tight_layout()
+        plt.savefig(self.plot_dir_entry.get() + '/' + self.file_name_entry.get() + ".png")
         plt.show()
 
         try:

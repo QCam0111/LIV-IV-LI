@@ -91,7 +91,7 @@ class CW_LI():
             # --------source-------
             
             # Read light amplitude from oscilloscope; multiply by 2 to use 50-ohms channel
-            self.current[i] = eval(self.keithley.query("read?"))
+            self.current[i] = eval(self.keithleySource.query("read?"))
             light_ampl_osc = self.scope.query_ascii_values(
                     "SINGLE;*OPC;:MEASure:VMAX? CHANNEL%d" % self.light_channel.get())[0]
             

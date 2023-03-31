@@ -138,11 +138,12 @@ class CW_LIV():
         filepath = os.path.join(txtDir + '/' + name + '.txt')
         fd = open(filepath, 'w+')
         i = 1
-
+        
+        fd.writelines('Device voltage (V)\tDevice current (A)\tPhotodetector current (W)\n')
         for i in range(0, len(self.voltage_array)):
             # --------IV file----------
-            fd.write(str(round(self.voltage_array[i], 5)))
-            fd.write(str(self.current[i]) + ' ')
+            fd.write(str(round(self.voltage_array[i], 5)) + '\t')
+            fd.write(str(self.current[i]) + '\t')
             fd.write(str(self.light[i]))
             fd.writelines('\n')
 

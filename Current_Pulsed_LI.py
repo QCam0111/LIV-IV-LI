@@ -32,21 +32,23 @@ class IPulse_LI():
                          self.current_channel.get())
         self.scope.write(":CHANnel%d:IMPedance FIFTy" %
                          self.light_channel.get())
-        # self.scope.write(":AUToscale")
         self.scope.write(":TIMebase:RANGe 2E-6")
-        self.scope.write(":TRIGger:MODE GLITch")
-        self.scope.write(":TRIGger:GLITch:SOURce CHANnel%d" %
-                         self.current_channel.get())
-        self.scope.write(":TRIGger:GLITch:QUALifier RANGe")
+        self.scope.write(":TRIGger:MODE EDGE")
+        self.scope.write(":TRIGger:EDGE:SOURce CHANnel%d" %self.trigger_channel.get())
+        self.scope.write(":TRIGger:LEVel:ASETup")
+        # self.scope.write(":TRIGger:MODE GLITch")
+        # self.scope.write(":TRIGger:GLITch:SOURce CHANnel%d" %
+        #                  self.current_channel.get())
+        # self.scope.write(":TRIGger:GLITch:QUALifier RANGe")
 
-        # Define glitch trigger range as: [50% of PW, 150% of PW]
-        glitchTriggerLower = float(self.pulse_width_entry.get())*0.5
-        glitchTriggerUpper = float(self.pulse_width_entry.get())*1.5
+        # # Define glitch trigger range as: [50% of PW, 150% of PW]
+        # glitchTriggerLower = float(self.pulse_width_entry.get())*0.5
+        # glitchTriggerUpper = float(self.pulse_width_entry.get())*1.5
 
-        self.scope.write(":TRIGger:GLITch:RANGe %.6fus,%.6fus" %(glitchTriggerLower,glitchTriggerUpper))
+        # self.scope.write(":TRIGger:GLITch:RANGe %.6fus,%.6fus" %(glitchTriggerLower,glitchTriggerUpper))
 
-        # Set initial trigger point to 1 mV
-        self.scope.write("TRIGger:GLITch:LEVel 1E-3")
+        # # Set initial trigger point to 1 mV
+        # self.scope.write("TRIGger:GLITch:LEVel 1E-3")
 
         # Channel scales - set each channel to 1mV/div to start
         vertScaleCurrent = 0.001
@@ -83,11 +85,10 @@ class IPulse_LI():
         # Calculate number of points based on step size
         currentRangeStart = float(self.start_current_entry.get())
         currentRangeStop = float(
-            self.stop_current_entry.get()) + float(self.step_size_entry.get())/1000
-        currentRangeStep = float(self.step_size_entry.get())/1000
+            self.stop_current_entry.get()) + float(self.step_size_entry.get())
+        currentRangeStep = float(self.step_size_entry.get())
 
-        currentSourceValues = np.arange(
-            currentRangeStart, currentRangeStop, currentRangeStep)
+        currentSourceValues = np.arange(currentRangeStart, currentRangeStop, currentRangeStep)
 
         # Lists for data values
         currentData = list()  # To be plotted on y-axis
@@ -101,8 +102,14 @@ class IPulse_LI():
         for I_s in currentSourceValues:
 
             self.pulser.write(":LDI %.3f" % (I_s))
+            if (self.pulser.query(":LDI?") != I_s):
+                self.pulser.write(":LDI %.3f" % (I_s))
+                sleep(1)
             self.pulser.write("OUTPut ON")
             sleep(0.1)
+
+            self.scope.write(":TRIGger:LEVel:ASETup")
+
             # Read current amplitude from oscilloscope; multiply by 2 to use 50-ohms channel
             current_ampl_osc = self.scope.query_ascii_values(
                 "SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.current_channel.get())[0]
@@ -134,11 +141,6 @@ class IPulse_LI():
                     "SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.light_channel.get())[0]
                 sleep(0.75)
 
-            # Update trigger cursor - update to VPulse_IV scheme?
-            updateTriggerCursor(current_ampl_osc, self.scope, totalDisplayCurrent)
-
-            R_S = 50.0  # AVTECH pulser source resistance
-
             current_ampl_device = 2*current_ampl_osc
             voltage_ampl_device = voltage_ampl_osc
 
@@ -164,40 +166,32 @@ class IPulse_LI():
         except:
             print('Error: Creating directory: '+self.txt_dir_entry.get())
 
-        filename = strftime("%Y%m%d_%HH%MM") + '.txt'
-        filesave1 = os.path.join(self.txt_dir_entry.get(), filename)
-        filesave2 = os.path.join(self.txt_dir_entry.get(
-        ), 'no' + self.file_name_entry.get()+'.txt')
+        # open file and write in data
+        txtDir = self.txt_dir_entry.get()
+        name = self.file_name_entry.get()
+        filepath = os.path.join(txtDir + '/' + name + '.txt')
+        fd = open(filepath, 'w+')
         i = 1
 
-        while(os.path.exists(filesave2)):
-            filesave2 = os.path.join(self.txt_dir_entry.get(
-            ), 'no' + self.file_name_entry.get()+str(i)+'.txt')
-            i = i+1
-
-        f = open(filesave2, 'w+')
-        f.writelines('\n')
-        f.writelines('Current (mA), Light Output\n')
+        fd.writelines('Device current (mA)\tDevice light output (W)\n')
         for i in range(0, len(currentData)):
-            f.writelines(str(currentData[i]))
-            f.writelines(' ')
-            f.writelines(str(voltageData[i]))
-            f.writelines('\r\n')
-        f.close()
-        print(filesave2)
-        print(filesave1)
-        shutil.copy(filesave2, filesave1)
+            # --------LI file----------
+            fd.write(str(round(currentData[i], 5)) + '\t')
+            fd.write(str(voltageData[i]))
+            fd.writelines('\n')
+        fd.close()
 
         # ------------------ Plot measured characteristic ----------------------------------
 
         fig, ax1 = plt.subplots()
         ax1.set_xlabel('Measured device current (mA)')
-        ax1.set_ylabel('Measured device light output')
+        ax1.set_ylabel('Measured device light output (W)')
         ax1.plot(currentData, voltageData, color='blue',
-                 label='Current Pulsed L-I Characteristic')
-        ax1.text(0, 1,'Current Pulsed\nPulse Width: ' + self.pulse_width_entry.get())
+                 label='L-I Characteristic')
         ax1.legend(loc='upper left')
 
+        plt.tight_layout()
+        plt.savefig(self.plot_dir_entry.get() + '/' + self.file_name_entry.get() + ".png")
         plt.show()
 
         try:
@@ -342,11 +336,14 @@ class IPulse_LI():
         channels = [1, 2, 3, 4]
         self.current_channel = IntVar()
         self.light_channel = IntVar()
+        self.trigger_channel = IntVar()
 
         # Set current channel to 1
         self.current_channel.set(1)
         # Set light channel to 2
         self.light_channel.set(2)
+        # Set trigger channel to 1
+        self.trigger_channel.set(1)
 
         # Current measurement channel label
         self.curr_channel_label = Label(self.devFrame, text='Current Channel')
@@ -363,3 +360,11 @@ class IPulse_LI():
         self.light_channel_dropdown = OptionMenu(
             self.devFrame, self.light_channel, *channels)
         self.light_channel_dropdown.grid(column=1, row=5)
+
+        # Trigger channel label
+        self.trigger_channel_label = Label(self.devFrame, text='Trigger channel')
+        self.trigger_channel_label.grid(column=2, row=4)
+        # Trigger channel dropdown
+        self.trigger_channel_dropdown = OptionMenu(
+            self.devFrame, self.trigger_channel, *channels)
+        self.trigger_channel_dropdown.grid(column=2, row=5, pady=(0,10))
