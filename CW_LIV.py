@@ -138,11 +138,12 @@ class CW_LIV():
         filepath = os.path.join(txtDir + '/' + name + '.txt')
         fd = open(filepath, 'w+')
         i = 1
-
+        
+        fd.writelines('Device voltage (V)\tDevice current (A)\tPhotodetector current (W)\n')
         for i in range(0, len(self.voltage_array)):
             # --------IV file----------
-            fd.write(str(round(self.voltage_array[i], 5)))
-            fd.write(str(self.current[i]) + ' ')
+            fd.write(str(round(self.voltage_array[i], 5)) + '\t')
+            fd.write(str(self.current[i]) + '\t')
             fd.write(str(self.light[i]))
             fd.writelines('\n')
 
@@ -153,14 +154,13 @@ class CW_LIV():
         fig, ax1 = plt.subplots()
         ax2 = ax1.twinx()
         ax2.set_ylabel('Measured device light output (W)', color='red')
-        ax1.set_xlabel('Measured device current (mA)')
-        ax1.set_ylabel('Measured device voltage (mV)', color='blue')
-        ax1.plot(self.current, self.voltage_array, color='blue',
-                 label='I-V Characteristic')
-        ax2.plot(self.current, self.light, color='red',
-                 label='L-I Characteristic')
+        ax1.set_xlabel('Measured device current (A)')
+        ax1.set_ylabel('Measured device voltage (V)', color='blue')
+        ax1.plot(self.current, self.voltage_array, color='blue', label='I-V Characteristic')
+        ax2.plot(self.current, self.light, color='red', label='L-I Characteristic')
 
         plt.tight_layout()
+        plt.savefig(self.plot_dir_entry.get() + '/' + self.file_name_entry.get() + ".png")
         plt.show()
 
         try:

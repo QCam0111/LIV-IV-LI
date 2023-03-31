@@ -9,6 +9,8 @@ from Tkinter import Label, Entry, Button, LabelFrame, OptionMenu, StringVar, Int
 
 # Import Browse button functions
 from Browse_buttons import browse_plot_file, browse_txt_file
+# Import trigger updating
+from Update_Trigger import updateTriggerCursor
 
 rm = pyvisa.ResourceManager()
 
@@ -16,9 +18,8 @@ class VPulse_LI():
 
     # Import Oscilloscope scaling
     from Oscilloscope_Scaling import incrOscVertScale
-    # Import trigger updating
-    from Update_Trigger import updateTriggerCursor
-        # Import function for adjusting vertical scales in oscilloscope
+
+    # Import function for adjusting vertical scales in oscilloscope
     from adjustVerticalScale import adjustVerticalScale
 
     def start_li_pulse(self):
@@ -132,20 +133,20 @@ class VPulse_LI():
                     "SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.current_channel.get())[0]
                 # Update trigger cursor to three quarters of the measured amplitude
                 if (self.trigger_channel.get() == self.current_channel.get()):
-                    self.updateTriggerCursor(current_ampl_osc, self.scope, totalDisplayCurrent)
+                    updateTriggerCursor(current_ampl_osc, self.scope, totalDisplayCurrent)
 
                 # Read voltage amplitude
                 voltage_ampl_osc = self.scope.query_ascii_values("SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.voltage_channel.get())[0]
                 # Update trigger cursor to three quarters of the measured amplitude
                 if (self.trigger_channel.get() == self.voltage_channel.get()):
-                    self.updateTriggerCursor(voltage_ampl_osc, self.scope, totalDisplayVoltage)
+                    updateTriggerCursor(voltage_ampl_osc, self.scope, totalDisplayVoltage)
 
                 # Read photodetector output
                 light_ampl_osc = self.scope.query_ascii_values(
                     "SINGLE;*OPC;:MEASure:VAMPlitude? CHANNEL%d" % self.light_channel.get())[0]
                 # Update trigger cursor to three quarters of the measured amplitude
                 if (self.trigger_channel.get() == self.light_channel.get()):
-                    self.updateTriggerCursor(light_ampl_osc, self.scope, totalDisplayLight)
+                    updateTriggerCursor(light_ampl_osc, self.scope, totalDisplayLight)
 
                 # Adjust vertical scales if measured amplitude reaches top of screen (90% of display)
                 vertScaleCurrent = self.adjustVerticalScale(self.current_channel.get(), self.trigger_channel.get(),\
@@ -189,39 +190,33 @@ class VPulse_LI():
         except:
             print('Error: Creating directory: '+self.txt_dir_entry.get())
 
-        filename = strftime("%Y%m%d_%HH%MM") + '.txt'
-        filesave1 = os.path.join(self.txt_dir_entry.get(), filename)
-        filesave2 = os.path.join(self.txt_dir_entry.get(
-        ), 'no' + self.file_name_entry.get()+'.txt')
+        # open file and write in data
+        txtDir = self.txt_dir_entry.get()
+        name = self.file_name_entry.get()
+        filepath = os.path.join(txtDir + '/' + name + '.txt')
+        fd = open(filepath, 'w+')
         i = 1
 
-        while(os.path.exists(filesave2)):
-            filesave2 = os.path.join(self.txt_dir_entry.get(
-            ), 'no' + self.file_name_entry.get()+str(i)+'.txt')
-            i = i+1
-
-        f = open(filesave2, 'w+')
-        f.writelines('\n')
-        f.writelines('Device current (mA), Photodetector current (mA)\n')
+        fd.writelines('Device current (mA), Photodetector current (W)\n')
         for i in range(0, len(currentData)):
-            f.writelines(str(currentData[i]))
-            f.writelines(' ')
-            f.writelines(str(lightData[i]))
-            f.writelines('\r\n')
-        f.close()
-        print(filesave2)
-        print(filesave1)
-        shutil.copy(filesave2, filesave1)
+            # --------LI file----------
+            fd.write(str(round(currentData[i], 5)) + ' ')
+            fd.write(str(lightData[i]))
+            fd.writelines('\n')
+        fd.close()
+
 
         # ------------------ Plot measured characteristic ----------------------------------
 
         fig, ax1 = plt.subplots()
         ax1.set_xlabel('Measured device current (mA)')
-        ax1.set_ylabel('Measured photodetector current (mA)')
+        ax1.set_ylabel('Measured photodetector current (W)')
         ax1.plot(currentData, lightData, color='blue',
                  label='L-I Characteristic')
         ax1.legend(loc='upper left')
 
+        plt.tight_layout()
+        plt.savefig(self.plot_dir_entry.get() + '/' + self.file_name_entry.get() + ".png")
         plt.show()
 
         try:
@@ -401,12 +396,12 @@ class VPulse_LI():
 
         # Set current channel to 1
         self.current_channel.set(1)
-        # Set voltage channel to 2
-        self.voltage_channel.set(2)
         # Set light channel to 2
-        self.light_channel.set(3)
+        self.light_channel.set(2)
+        # Set voltage channel to 2
+        self.voltage_channel.set(3)
         # Set trigger channel to the channel for the current waveform
-        self.trigger_channel.set(2)
+        self.trigger_channel.set(3)
 
         # Current measurement channel label
         self.curr_channel_label = Label(self.devFrame, text='Current channel')
