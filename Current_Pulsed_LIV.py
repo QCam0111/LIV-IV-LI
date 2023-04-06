@@ -33,11 +33,11 @@ class IPulse_LIV():
         self.scope.write("*CLS")
         self.scope.write(":CHANnel%d:IMPedance FIFTy" %self.light_channel.get())
         self.scope.write(":CHANnel%d:IMPedance FIFTy" %self.current_channel.get())
-        self.scope.write(":CHANnel%d:IMPedance FIFTy" %self.voltage_channel.get())
+        self.scope.write(":CHANnel%d:IMPedance onemeg" %self.voltage_channel.get())
 
         pulseWidth = float(self.pulse_width_entry.get())
         # Mulitplication by 10 is due to a peculiarty of this oscilloscope
-        self.scope.write(":TIMebase:RANGe %.6fus" %(2*pulseWidth*10))
+        self.scope.write(":TIMebase:RANGe %.6fus" %(0.5*pulseWidth*10))
         self.scope.write(":TRIGger:MODE EDGE")
         self.scope.write(":TRIGger:EDGE:SOURce CHANnel%d" %self.trigger_channel.get())
         self.scope.write(":TRIGger:LEVel:ASETup")
@@ -96,12 +96,13 @@ class IPulse_LIV():
 
         currentSourceValues = np.arange(currentRangeStart, currentRangeStop, currentRangeStep)
 
+        # Obtain series resistance value from entry box
+        seriesResistance = float(self.series_resistance_entry.get())
+
         # Lists for data values
         lightData = list()
         currentData = list()  # To be plotted on y-axis
         voltageData = list()  # To be plotted on x-axis
-
-        i = 1
 
         lightData.append(0)
         voltageData.append(0)
@@ -159,13 +160,11 @@ class IPulse_LIV():
             R_S = 50.0  # AVTECH pulser source resistance
 
             current_ampl_device = 2*current_ampl_osc
-            voltage_ampl_device = voltage_ampl_osc
+            voltage_ampl_device = voltage_ampl_osc - seriesResistance*current_ampl_device
 
             lightData.append(light_ampl_osc)
             voltageData.append(voltage_ampl_device)
             currentData.append(current_ampl_device)
-
-            i = i + 1
             
         # Convert current and voltage readings to mA and mV values
         currentData[:] = [x*1000 for x in currentData]
@@ -301,6 +300,13 @@ class IPulse_LIV():
         # Stop current entry box
         self.stop_current_entry = Entry(self.pulseFrame, width=5)
         self.stop_current_entry.grid(column=2, row=9, pady=(0,10))
+
+        # Series resistance label
+        self.series_resistance_label = Label(self.pulseFrame, text='Series resistance (ohms)')
+        self.series_resistance_label.grid(column=1, row=10)
+        # Series resistance entry box
+        self.series_resistance_entry = Entry(self.pulseFrame, width=5)
+        self.series_resistance_entry.grid(column=1, row=11, pady=(0,10))
 
         # Start Button
         self.start_button = Button(
