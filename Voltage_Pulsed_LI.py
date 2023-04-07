@@ -5,7 +5,7 @@ from numpy import size
 import os
 import shutil
 import matplotlib.pyplot as plt
-from Tkinter import Label, Entry, Button, LabelFrame, OptionMenu, StringVar, IntVar
+from Tkinter import Label, Entry, Button, LabelFrame, OptionMenu, StringVar, IntVar, Radiobutton
 
 # Import Browse button functions
 from Browse_buttons import browse_plot_file, browse_txt_file
@@ -236,23 +236,7 @@ class VPulse_LI():
         # Assign window title and geometry
         self.master.title('Voltage Pulse Measurement: L-I')
 
-        # # Plot frame
-        # self.plotFrame = LabelFrame(self.master, text='Plot', padx=5, pady=5)
-        # # Display plot frame
-        # self.plotFrame.grid(column=0, row=0, rowspan=2)
-
-        # self.fig = Figure(figsize=(5, 5), dpi=100)
-
-        # y = 0
-
-        # self.plot1 = self.fig.add_subplot(111)
-        # self.plot1.plot(y)
-
-        # self.figCanv = FigureCanvasTkAgg(self.fig, master=self.plotFrame)
-        # self.figCanv.draw()
-        # self.figCanv.get_tk_widget().grid(column=0, row=0)
-
-        # Pulse settings frame
+        """ Pulse settings frame """
         self.pulseFrame = LabelFrame(self.master, text='Pulse Settings')
         # Display pulse settings frame
         self.pulseFrame.grid(column=0, row=0, rowspan=2, sticky='N', padx=(10, 5), pady=(0,10))
@@ -283,77 +267,100 @@ class VPulse_LI():
             self.pulseFrame, text='Browse', command=lambda:browse_txt_file(self))
         self.txt_dir_file.grid(column=3, row=3, ipadx=5)
 
-        # Create label for file name entry box
-        self.file_name_label = Label(self.pulseFrame, text='File name:')
-        self.file_name_label.grid(column=1, row=4, sticky='W', columnspan=2)
-        # File name entry box
-        self.file_name_entry = Entry(self.pulseFrame, width=30)
-        self.file_name_entry.grid(
-            column=1, row=5, sticky='W', padx=(3, 0), columnspan=3)
-
         # Step size label
         self.step_size_label = Label(self.pulseFrame, text='Step size (mV)')
-        self.step_size_label.grid(column=1, row=6)
+        self.step_size_label.grid(column=1, row=4)
         # Step size entry box
         self.step_size_entry = Entry(self.pulseFrame, width=5)
-        self.step_size_entry.grid(column=1, row=7)
+        self.step_size_entry.grid(column=1, row=5)
 
         # Delay label
         self.delay_label = Label(self.pulseFrame, text='Delay (ms)')
-        self.delay_label.grid(column=2, row=6)
+        self.delay_label.grid(column=2, row=4)
         # Delay entry box
         self.delay_entry = Entry(self.pulseFrame, width=5)
-        self.delay_entry.grid(column=2, row=7)
+        self.delay_entry.grid(column=2, row=5)
 
         # Pulse width label
         self.pulse_width_label = Label(
             self.pulseFrame, text='Pulse Width (' + u'\u03BC' + 's)')
-        self.pulse_width_label.grid(column=3, row=6)
+        self.pulse_width_label.grid(column=3, row=4)
         # Pulse width entry box
         self.pulse_width_entry = Entry(self.pulseFrame, width=5)
-        self.pulse_width_entry.grid(column=3, row=7)
+        self.pulse_width_entry.grid(column=3, row=5)
 
         # Start voltage label
         self.start_voltage_label = Label(self.pulseFrame, text='Start (V)')
-        self.start_voltage_label.grid(column=1, row=8)
+        self.start_voltage_label.grid(column=1, row=6)
         # Start voltage entry box
         self.start_voltage_entry = Entry(self.pulseFrame, width=5)
-        self.start_voltage_entry.grid(column=1, row=9, pady=(0,10))
+        self.start_voltage_entry.grid(column=1, row=7, pady=(0,10))
 
         # Stop voltage label
         self.stop_voltage_label = Label(self.pulseFrame, text='Stop (V)')
-        self.stop_voltage_label.grid(column=2, row=8)
+        self.stop_voltage_label.grid(column=2, row=6)
         # Stop voltage entry box
         self.stop_voltage_entry = Entry(self.pulseFrame, width=5)
-        self.stop_voltage_entry.grid(column=2, row=9, pady=(0,10))
+        self.stop_voltage_entry.grid(column=2, row=7, pady=(0,10))
 
         # Frequency label
         self.frequency_label = Label(self.pulseFrame, text='Frequency (kHz)')
-        self.frequency_label.grid(column=3, row=8)
+        self.frequency_label.grid(column=3, row=6)
         # Frequency entry box
         self.frequency_entry = Entry(self.pulseFrame, width=5)
-        self.frequency_entry.grid(column=3, row=9, pady=(0,10))
+        self.frequency_entry.grid(column=3, row=7, pady=(0,10))
 
         # Series resistance label
-        self.series_resistance_label = Label(self.pulseFrame, text='Series resistance (ohms)')
-        self.series_resistance_label.grid(column=1, row=10)
+        self.series_resistance_label = Label(self.pulseFrame, text='Series resistance (' + u'\u03A9' + ')')
+        self.series_resistance_label.grid(column=1, row=8)
         # Series resistance entry box
         self.series_resistance_entry = Entry(self.pulseFrame, width=5)
-        self.series_resistance_entry.grid(column=1, row=11, pady=(0,10))
+        self.series_resistance_entry.grid(column=1, row=9, pady=(0,10))
 
         # Start Button
-        self.start_button = Button(
-            self.master, text='Start', command=self.start_li_pulse)
-        self.start_button.grid(column=1, row=1, ipadx=10, pady=5)
-        # # Stop Button
-        # self.stop_button = Button(
-        #     self.setFrame, text='Stop', state=DISABLED, command=self.stop_pressed)
-        # self.stop_button.grid(column=3, row=11, ipadx=10, pady=5)
+        self.start_button = Button(self.pulseFrame, text='Start', command=self.start_li_pulse)
+        self.start_button.grid(column=0, columnspan=4, row=10, ipadx=10, pady=5)
 
-        # Device settings frame
+        """ Device settings frame """
         self.devFrame = LabelFrame(self.master, text='Device Settings')
         # Display device settings frame
-        self.devFrame.grid(column=1, row=0, sticky='N', padx=(10, 5))
+        self.devFrame.grid(column=1, row=0, sticky='W', padx=(10, 5), pady=(5,0))
+        
+        # Create label for device name entry box
+        self.device_name_label = Label(self.devFrame, text='Device name:')
+        self.device_name_label.grid(column=0, row=0, sticky='W')
+        # Device name entry box
+        self.device_name_entry = Entry(self.devFrame, width=15)
+        self.device_name_entry.grid(column=0, row=1, sticky='W', padx=(3, 0))
+
+        # Create label for device dimensions entry box
+        self.device_dim_label = Label(self.devFrame, text='Device dimensions:')
+        self.device_dim_label.grid(column=0, row=2, sticky='W')
+        # Device dimensions entry box
+        self.device_dim_entry = Entry(self.devFrame, width=15)
+        self.device_dim_entry.grid(column=0, row=3, sticky='W', padx=(3, 0))
+
+        self.test_laser_button_var = StringVar()
+
+        self.laser_radiobuttom = Radiobutton(self.devFrame, text='Laser', variable=self.test_laser_button_var, value='Laser')
+        self.laser_radiobuttom.grid(column=0, row=4, padx=(10, 0), sticky='W')
+        self.test_radiobuttom = Radiobutton(self.devFrame, text='Test', variable=self.test_laser_button_var, value='Test')
+        self.test_radiobuttom.grid(column=1, row=4, padx=(10, 0), sticky='W')
+
+        self.test_laser_button_var.set('Laser')
+
+
+        # Create label for device temperature entry box
+        self.device_temp_label = Label(self.devFrame, text='Temperature (' + u'\u00B0' +'C):')
+        self.device_temp_label.grid(column=1, row=0, sticky='W')
+        # Device name entry box
+        self.device_temp_entry = Entry(self.devFrame, width=5)
+        self.device_temp_entry.grid(column=1, row=1, sticky='W', padx=(3, 0))
+
+        """ Instrument settings frame """
+        self.instrFrame = LabelFrame(self.master, text='Instrument Settings')
+        # Display device settings frame
+        self.instrFrame.grid(column=1, row=1, sticky='N', padx=(10, 5), pady=(5,5))
 
         # Device addresses
         connected_addresses = list(rm.list_resources())
@@ -370,20 +377,20 @@ class VPulse_LI():
         self.scope_address.set('Choose oscilloscope address.')
 
         # Pulser address label
-        self.pulse_label = Label(self.devFrame, text='Pulser Address')
+        self.pulse_label = Label(self.instrFrame, text='Pulser Address')
         self.pulse_label.grid(column=0, row=0, sticky='W')
         # Pulser address dropdown
         self.pulse_addr = OptionMenu(
-            self.devFrame, self.pulse_address, *connected_addresses)
+            self.instrFrame, self.pulse_address, *connected_addresses)
         self.pulse_addr.grid(column=0, columnspan=2, row=1,
                              padx=5, pady=5, sticky='W')
 
         # Oscilloscope address label
-        self.scope_label = Label(self.devFrame, text='Oscilloscope Address')
+        self.scope_label = Label(self.instrFrame, text='Oscilloscope Address')
         self.scope_label.grid(column=0, row=2, sticky='W')
         # Oscilloscope address dropdown
         self.scope_addr = OptionMenu(
-            self.devFrame, self.scope_address, *connected_addresses)
+            self.instrFrame, self.scope_address, *connected_addresses)
         self.scope_addr.grid(column=0, columnspan=2, row=3,
                              padx=5, pady=5, sticky='W')
 
@@ -404,33 +411,66 @@ class VPulse_LI():
         self.trigger_channel.set(3)
 
         # Current measurement channel label
-        self.curr_channel_label = Label(self.devFrame, text='Current channel')
+        self.curr_channel_label = Label(self.instrFrame, text='Current channel')
         self.curr_channel_label.grid(column=0, row=4)
         # Current measurement channel dropdown
         self.curr_channel_dropdown = OptionMenu(
-            self.devFrame, self.current_channel, *channels)
+            self.instrFrame, self.current_channel, *channels)
         self.curr_channel_dropdown.grid(column=0, row=5)
 
+        self.curr_imp_label = Label(self.instrFrame, text='Impedance')
+        self.curr_imp_label.grid(column=0, row=6, sticky='W')
+
+        curr_impedance = ['50' + u'\u03A9', '1M' + u'\u03A9']
+
+        self.curr_channel_impedance = StringVar()
+        self.curr_channel_impedance.set('50' + u'\u03A9')
+
+        self.curr_impedance_dropdown = OptionMenu(self.instrFrame, self.curr_channel_impedance, *curr_impedance)
+        self.curr_impedance_dropdown.grid(column=0, row=7, padx=5,pady=(0,5), sticky='W')
+
         # Light measurement channel label
-        self.light_channel_label = Label(self.devFrame, text='Light channel')
+        self.light_channel_label = Label(self.instrFrame, text='Light channel')
         self.light_channel_label.grid(column=1, row=4)
         # Light measurement channel dropdown
         self.light_channel_dropdown = OptionMenu(
-            self.devFrame, self.light_channel, *channels)
+            self.instrFrame, self.light_channel, *channels)
         self.light_channel_dropdown.grid(column=1, row=5)
 
+        self.light_imp_label = Label(self.instrFrame, text='Impedance')
+        self.light_imp_label.grid(column=1, row=6, sticky='W')
+
+        light_impedance = ['50' + u'\u03A9', '1M' + u'\u03A9']
+
+        self.light_channel_impedance = StringVar()
+        self.light_channel_impedance.set('50' + u'\u03A9')
+
+        self.light_impedance_dropdown = OptionMenu(self.instrFrame, self.light_channel_impedance, *light_impedance)
+        self.light_impedance_dropdown.grid(column=1, row=7, padx=5,pady=(0,5), sticky='W')
+
         # Voltage measurement channel label
-        self.voltage_channel_label = Label(self.devFrame, text='Voltage channel')
+        self.voltage_channel_label = Label(self.instrFrame, text='Voltage channel')
         self.voltage_channel_label.grid(column=2, row=4)
         # Voltage measurement channel dropdown
         self.voltage_channel_dropdown = OptionMenu(
-            self.devFrame, self.voltage_channel, *channels)
+            self.instrFrame, self.voltage_channel, *channels)
         self.voltage_channel_dropdown.grid(column=2, row=5)
 
+        self.volt_imp_label = Label(self.instrFrame, text='Impedance')
+        self.volt_imp_label.grid(column=2, row=6, sticky='W')
+
+        volt_impedance = ['50' + u'\u03A9', '1M' + u'\u03A9']
+
+        self.volt_channel_impedance = StringVar()
+        self.volt_channel_impedance.set('50' + u'\u03A9')
+
+        self.volt_impedance_dropdown = OptionMenu(self.instrFrame, self.volt_channel_impedance, *volt_impedance)
+        self.volt_impedance_dropdown.grid(column=2, row=7, padx=5,pady=(0,5), sticky='W')
+
         # Trigger channel label
-        self.trigger_channel_label = Label(self.devFrame, text='Trigger channel')
+        self.trigger_channel_label = Label(self.instrFrame, text='Trigger channel')
         self.trigger_channel_label.grid(column=3, row=4)
         # Trigger channel dropdown
         self.trigger_channel_dropdown = OptionMenu(
-            self.devFrame, self.trigger_channel, *channels)
+            self.instrFrame, self.trigger_channel, *channels)
         self.trigger_channel_dropdown.grid(column=3, row=5)

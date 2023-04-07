@@ -298,7 +298,7 @@ class CW_LIV():
         """ Device settings frame """
         self.devFrame = LabelFrame(self.master, text='Device Settings')
         # Display device settings frame
-        self.devFrame.grid(column=1, row=0, sticky='W', padx=(10, 5))
+        self.devFrame.grid(column=1, row=0, sticky='W', padx=(10, 5), pady=(5,0))
         
         # Create label for device name entry box
         self.device_name_label = Label(self.devFrame, text='Device name:')
@@ -331,12 +331,10 @@ class CW_LIV():
         self.device_temp_entry = Entry(self.devFrame, width=5)
         self.device_temp_entry.grid(column=1, row=1, sticky='W', padx=(3, 0))
 
-
-
         """ Instrument settings frame """
         self.instrFrame = LabelFrame(self.master, text='Instrument Settings')
         # Display device settings frame
-        self.instrFrame.grid(column=1, row=1, sticky='W', padx=(10, 5))
+        self.instrFrame.grid(column=1, row=1, sticky='W', padx=(10, 5), pady=(5,5))
 
         # Device addresses
         connected_addresses = list(rm.list_resources())
