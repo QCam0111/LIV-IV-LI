@@ -84,24 +84,6 @@ class CW_LIV():
                 logspace(log10(abs(float(self.start_voltage_entry.get()))
                                ), -4, int(self.num_of_pts_entry.get())/2)
             self.voltage_array = append(voltage_source_neg, voltage_source_pos)
-        elif 'Linlog' == self.radiobutton_var.get():
-            # Set up Linear voltage array
-            stepSize = round(float(self.step_size_entry.get())/1000, 3)
-            startV = float(self.start_voltage_entry.get())
-            stopV = float(self.stop_voltage_entry.get())
-
-            self.voltage_array = arange(startV, -0.5+stepSize, stepSize)
-            voltage_linear_pos = arange(0.5+stepSize, stopV+stepSize, stepSize)
-
-            # Log scale
-            voltage_log_pos = logspace(-4, log10(0.5),
-                                       int(self.num_of_pts_entry.get())/2)
-            voltage_log_neg = - \
-                logspace(log10(0.5), -4, int(self.num_of_pts_entry.get())/2)
-
-            self.voltage_array = append(self.voltage_array, voltage_log_neg)
-            self.voltage_array = append(self.voltage_array, voltage_log_pos)
-            self.voltage_array = append(self.voltage_array, voltage_linear_pos)
 
         # read
         # Create empty space vector
@@ -215,16 +197,6 @@ class CW_LIV():
         self.num_of_pts_entry.config(state=NORMAL)
 
     """
-    Function referenced when: Linlog radiobutton is selected
-    Description: When in linear-logarithmic mode, we use both the step size
-    and the number of points for plotting, so enable both entries.
-    """
-
-    def linlog_selected(self):
-        self.step_size_entry.config(state=NORMAL)
-        self.num_of_pts_entry.config(state=NORMAL)
-
-    """
     Function referenced when: Initializing the application window
     Description: Creates the base geometry and all widgets on the top level
     of the application window
@@ -236,10 +208,10 @@ class CW_LIV():
         # Assign window title and geometry
         self.master.title('CW Measurement: L-I-V')
 
-        # Sweep settings frame
+        """ Sweep settings frame """
         self.setFrame = LabelFrame(self.master, text='Sweep Settings')
         # Display settings frame
-        self.setFrame.grid(column=0, row=0, sticky='W', padx=(10, 5), pady=(0,5))
+        self.setFrame.grid(column=0, row=0, sticky='W', padx=(10, 5), pady=(0,5), rowspan=2)
 
         # Create plot directory label, button, and entry box
         # Plot File Label
@@ -264,14 +236,6 @@ class CW_LIV():
         self.txt_dir_file = Button(
             self.setFrame, text='Browse', command=lambda:browse_txt_file(self))
         self.txt_dir_file.grid(column=3, row=3, ipadx=5)
-
-        # Create label for file name entry box
-        self.file_name_label = Label(self.setFrame, text='File name:')
-        self.file_name_label.grid(column=1, row=4, sticky='W', columnspan=2)
-        # File name entry box
-        self.file_name_entry = Entry(self.setFrame, width=30)
-        self.file_name_entry.grid(
-            column=1, row=5, sticky='W', padx=(3, 0), columnspan=3)
 
         # Step size label
         self.step_size_label = Label(self.setFrame, text='Step size (mV)')
@@ -320,10 +284,6 @@ class CW_LIV():
             self.setFrame, text='Log', variable=self.radiobutton_var, command=self.log_selected, value='Log')
         self.log_radiobutton.grid(column=2, row=10, sticky='W')
 
-        self.linlog_radiobutton = Radiobutton(
-            self.setFrame, text='Lin-log', variable=self.radiobutton_var, command=self.linlog_selected, value='Linlog')
-        self.linlog_radiobutton.grid(column=3, row=10, sticky='W')
-
         # The default setting for radiobutton is set to linear sweep
         self.radiobutton_var.set('Lin')
 
@@ -335,10 +295,48 @@ class CW_LIV():
             self.setFrame, text='Start', command=self.start_liv_sweep)
         self.start_button.grid(column=2, row=11, ipadx=10, pady=5)
 
-        # Device settings frame
+        """ Device settings frame """
         self.devFrame = LabelFrame(self.master, text='Device Settings')
         # Display device settings frame
         self.devFrame.grid(column=1, row=0, sticky='W', padx=(10, 5))
+        
+        # Create label for device name entry box
+        self.device_name_label = Label(self.devFrame, text='Device name:')
+        self.device_name_label.grid(column=0, row=0, sticky='W')
+        # Device name entry box
+        self.device_name_entry = Entry(self.devFrame, width=15)
+        self.device_name_entry.grid(column=0, row=1, sticky='W', padx=(3, 0))
+
+        # Create label for device dimensions entry box
+        self.device_dim_label = Label(self.devFrame, text='Device dimensions:')
+        self.device_dim_label.grid(column=0, row=2, sticky='W')
+        # Device dimensions entry box
+        self.device_dim_entry = Entry(self.devFrame, width=15)
+        self.device_dim_entry.grid(column=0, row=3, sticky='W', padx=(3, 0))
+
+        self.test_laser_button_var = StringVar()
+
+        self.laser_radiobuttom = Radiobutton(self.devFrame, text='Laser', variable=self.test_laser_button_var, value='Laser')
+        self.laser_radiobuttom.grid(column=0, row=4, padx=(10, 0), sticky='W')
+        self.test_radiobuttom = Radiobutton(self.devFrame, text='Test', variable=self.test_laser_button_var, value='Test')
+        self.test_radiobuttom.grid(column=1, row=4, padx=(10, 0), sticky='W')
+
+        self.test_laser_button_var.set('Laser')
+
+
+        # Create label for device temperature entry box
+        self.device_temp_label = Label(self.devFrame, text='Temperature (' + u'\u00B0' +'C):')
+        self.device_temp_label.grid(column=1, row=0, sticky='W')
+        # Device name entry box
+        self.device_temp_entry = Entry(self.devFrame, width=5)
+        self.device_temp_entry.grid(column=1, row=1, sticky='W', padx=(3, 0))
+
+
+
+        """ Instrument settings frame """
+        self.instrFrame = LabelFrame(self.master, text='Instrument Settings')
+        # Display device settings frame
+        self.instrFrame.grid(column=1, row=1, sticky='W', padx=(10, 5))
 
         # Device addresses
         connected_addresses = list(rm.list_resources())
@@ -354,23 +352,21 @@ class CW_LIV():
         self.keithley_address.set('Choose Keithley address.')
         self.osc_address.set('Choose Oscilloscope address.')
 
-        self.keithley_label = Label(self.devFrame, text='Keithley Address')
-        self.keithley_label.grid(column=0, row=0, sticky='W')
+        self.keithley_label = Label(self.instrFrame, text='Keithley Address')
+        self.keithley_label.grid(column=0, row=0, sticky='W', columnspan=2)
 
-        self.keithley_addr = OptionMenu(
-            self.devFrame, self.keithley_address, *connected_addresses)
-        self.keithley_addr.grid(column=0, row=1, padx=5, sticky='W')
+        self.keithley_addr = OptionMenu(self.instrFrame, self.keithley_address, *connected_addresses)
+        self.keithley_addr.grid(column=0, row=1, padx=5, sticky='W', columnspan=2)
 
-        self.osc_label = Label(self.devFrame, text='Oscilloscope Address')
-        self.osc_label.grid(column=0, row=2, sticky='W')
+        self.osc_label = Label(self.instrFrame, text='Oscilloscope Address')
+        self.osc_label.grid(column=0, row=2, sticky='W', columnspan=2)
 
-        self.osc_addr = OptionMenu(
-            self.devFrame, self.osc_address, *connected_addresses)
-        self.osc_addr.grid(column=0, row=3, padx=5, sticky='W')
-
-        self.osc_label = Label(self.devFrame, text='Oscilloscope Light Channel')
+        self.osc_label = Label(self.instrFrame, text='Light Channel')
         self.osc_label.grid(column=0, row=4, sticky='W')
 
+        self.osc_addr = OptionMenu(self.instrFrame, self.osc_address, *connected_addresses)
+        self.osc_addr.grid(column=0, row=3, padx=5, sticky='W', columnspan=2)
+        
         # Oscilloscope channel options
         channels = [1, 2, 3, 4]
 
@@ -379,6 +375,17 @@ class CW_LIV():
         self.light_channel.set(1)
 
         # Light measurement channel dropdown
-        self.light_channel_dropdown = OptionMenu(
-            self.devFrame, self.light_channel, *channels)
+        self.light_channel_dropdown = OptionMenu(self.instrFrame, self.light_channel, *channels)
         self.light_channel_dropdown.grid(column=0, row=5, padx=5, pady=(0,5), sticky='W')
+
+        self.imp_label = Label(self.instrFrame, text='Channel Impedance')
+        self.imp_label.grid(column=1, row=4, sticky='W')
+
+        # Oscilloscope Channel
+        impedance = ['50' + u'\u03A9', '1M' + u'\u03A9']
+
+        self.channel_impedance = StringVar()
+        self.channel_impedance.set('50' + u'\u03A9')
+
+        self.channel_impedance_dropdown = OptionMenu(self.instrFrame, self.channel_impedance, *impedance)
+        self.channel_impedance_dropdown.grid(column=1, row=5, padx=5,pady=(0,5), sticky='W')

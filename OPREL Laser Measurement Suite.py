@@ -3,17 +3,6 @@ from Tkinter import Label, Button, Radiobutton, Toplevel, StringVar
 import tkMessageBox as messagebox
 
 # Import measurement files
-
-import CW_LIV
-import CW_IV
-import CW_LI
-import Voltage_Pulsed_LIV
-import Voltage_Pulsed_IV
-import Voltage_Pulsed_LI
-import Current_Pulsed_LIV
-import Current_Pulsed_IV
-import Current_Pulsed_LI
-
 from CW_LIV import CW_LIV
 from CW_IV import CW_IV
 from CW_LI import CW_LI
