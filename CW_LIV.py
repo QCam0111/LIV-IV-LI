@@ -318,7 +318,7 @@ class CW_LIV():
 
         self.laser_radiobuttom = Radiobutton(self.devFrame, text='Laser', variable=self.test_laser_button_var, value='Laser')
         self.laser_radiobuttom.grid(column=0, row=4, padx=(10, 0), sticky='W')
-        self.test_radiobuttom = Radiobutton(self.devFrame, text='Test', variable=self.test_laser_button_var, value='Test')
+        self.test_radiobuttom = Radiobutton(self.devFrame, text='Test Structure', variable=self.test_laser_button_var, value='TestStructure')
         self.test_radiobuttom.grid(column=1, row=4, padx=(10, 0), sticky='W')
 
         self.test_laser_button_var.set('Laser')
