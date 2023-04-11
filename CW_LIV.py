@@ -51,7 +51,7 @@ class CW_LIV():
         self.scope.write("*RST")
         self.scope.write("*CLS")
 
-        self.scope.write(":CHANnel%d:IMPedance " + channelImpedance(self.channel_impedance.get()) %self.light_channel.get())
+        self.scope.write(":CHANnel%d:IMPedance %s" %(self.light_channel.get(), channelImpedance(self.light_channel_impedance.get())))
         self.scope.write(":TIMebase:RANGe 2E-6")
 
         # Channel scales - set each channel to 1mV/div to start
@@ -118,7 +118,7 @@ class CW_LIV():
         # open file and write in data
         txtDir = self.txt_dir_entry.get()
         filename = self.device_name_entry.get() + '_CW-LIV_' + self.device_temp_entry.get() + \
-            '_' + self.device_dim_entry.get() + '_' + self.test_laser_button_var.get()
+            'C_' + self.device_dim_entry.get() + '_' + self.test_laser_button_var.get()
         filepath = os.path.join(txtDir + '/' + filename + '.txt')
         fd = open(filepath, 'w+')
         i = 1
@@ -143,13 +143,14 @@ class CW_LIV():
         ax1.plot(self.current, self.voltage_array, color='blue', label='I-V Characteristic')
         ax2.plot(self.current, self.light, color='red', label='L-I Characteristic')
         
-        plotString = 'Device Name: ' + self.device_name_entry.get() + '\n' 'Test Type: CW-LIV\n' + 'Temperature (' + u'\u00B0' + 'C):' + self.device_temp_entry.get() + \
+        plotString = 'Device Name: ' + self.device_name_entry.get() + '\n' 'Test Type: CW-LIV\n' + 'Temperature (' + u'\u00B0' + 'C): ' + self.device_temp_entry.get() + \
             '\n' + 'Device Dimensions: ' + self.device_dim_entry.get() + '\n' + \
             'Test Structure or Laser: ' + self.test_laser_button_var.get()
 
-        plt.gcf().text(0.5, 0.1, plotString, fontsize=12)
+        plt.figtext(0.02, 0.02, plotString, fontsize=12)
 
-        plt.tight_layout()
+        plt.subplots_adjust(bottom=0.3)
+
         plt.savefig(self.plot_dir_entry.get() + '/' + filename + ".png")
         plt.show()
 

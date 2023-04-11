@@ -45,7 +45,7 @@ class CW_LI():
         # Initialize oscilloscope
         self.scope.write("*RST")
         self.scope.write("*CLS")
-        self.scope.write(":CHANnel%d:IMPedance " + channelImpedance(self.channel_impedance.get()) %self.light_channel.get())
+        self.scope.write(":CHANnel%d:IMPedance %s" %(self.light_channel.get(), channelImpedance(self.channel_impedance.get())))
         self.scope.write(":TIMebase:RANGe 2E-6")
 
         # Channel scales - set each channel to 1mV/div to start
@@ -114,7 +114,7 @@ class CW_LI():
         # open file and write in data
         txtDir = self.txt_dir_entry.get()
         filename = self.device_name_entry.get() + '_CW-LI_' + self.device_temp_entry.get() + \
-            '_' + self.device_dim_entry.get() + '_' + self.test_laser_button_var.get()
+            'C_' + self.device_dim_entry.get() + '_' + self.test_laser_button_var.get()
         filepath = os.path.join(txtDir + '/' + filename + '.txt')
         fd = open(filepath, 'w+')
         i = 1
@@ -135,13 +135,14 @@ class CW_LI():
         ax1.plot(self.current, self.light, color='blue', label='L-I Characteristic')
         ax1.legend(loc='upper left')
 
-        plotString = 'Device Name: ' + self.device_name_entry.get() + '\n' 'Test Type: CW-LI\n' + 'Temperature (' + u'\u00B0' + 'C):' + self.device_temp_entry.get() + \
+        plotString = 'Device Name: ' + self.device_name_entry.get() + '\n' 'Test Type: CW-LI\n' + 'Temperature (' + u'\u00B0' + 'C): ' + self.device_temp_entry.get() + \
             '\n' + 'Device Dimensions: ' + self.device_dim_entry.get() + '\n' + \
             'Test Structure or Laser: ' + self.test_laser_button_var.get()
 
-        plt.gcf().text(0.5, 0.1, plotString, fontsize=12)
+        plt.figtext(0.02, 0.02, plotString, fontsize=12)
 
-        plt.tight_layout()
+        plt.subplots_adjust(bottom=0.3)
+
         plt.savefig(self.plot_dir_entry.get() + '/' + filename + ".png")
         plt.show()
 
@@ -341,7 +342,7 @@ class CW_LI():
             connected_addresses = ['No devices detected.']
 
         # Set the pulser and scope variables to default values
-        self.keithley_address.set('Choose pulser address.')
+        self.keithley_address.set('Choose keithley address.')
         self.scope_address.set('Choose oscilloscope address.')
 
         # Keithley address label

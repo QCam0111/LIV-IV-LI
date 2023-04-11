@@ -28,8 +28,8 @@ class IPulse_LI():
         # Initialize oscilloscope
         self.scope.write("*RST")
         self.scope.write("*CLS")
-        self.scope.write(":CHANnel%d:IMPedance " + channelImpedance(self.curr_channel_impedance.get()) %self.current_channel.get())
-        self.scope.write(":CHANnel%d:IMPedance " + channelImpedance(self.light_channel_impedance.get()) %self.light_channel.get())
+        self.scope.write(":CHANnel%d:IMPedance %s" %(self.current_channel.get(), channelImpedance(self.curr_channel_impedance.get())))
+        self.scope.write(":CHANnel%d:IMPedance %s" %(self.light_channel.get(), channelImpedance(self.light_channel_impedance.get())))
         self.scope.write(":TIMebase:RANGe 2E-6")
         self.scope.write(":TRIGger:MODE EDGE")
         self.scope.write(":TRIGger:EDGE:SOURce CHANnel%d" %self.trigger_channel.get())
@@ -167,7 +167,7 @@ class IPulse_LI():
         # open file and write in data
         txtDir = self.txt_dir_entry.get()
         filename = self.device_name_entry.get() + '_CP-LI_' + self.device_temp_entry.get() + \
-            '_' + self.device_dim_entry.get() + '_' + self.test_laser_button_var.get()
+            'C_' + self.device_dim_entry.get() + '_' + self.test_laser_button_var.get()
         filepath = os.path.join(txtDir + '/' + filename + '.txt')
         fd = open(filepath, 'w+')
         i = 1
@@ -185,17 +185,17 @@ class IPulse_LI():
         fig, ax1 = plt.subplots()
         ax1.set_xlabel('Measured device current (mA)')
         ax1.set_ylabel('Measured device light output (W)')
-        ax1.plot(currentData, voltageData, color='blue',
-                 label='L-I Characteristic')
+        ax1.plot(currentData, voltageData, color='blue',label='L-I Characteristic')
         ax1.legend(loc='upper left')
 
-        plotString = 'Device Name: ' + self.device_name_entry.get() + '\n' 'Test Type: CP-LI\n' + 'Temperature (' + u'\u00B0' + 'C):' + self.device_temp_entry.get() + \
+        plotString = 'Device Name: ' + self.device_name_entry.get() + '\n' 'Test Type: CP-LI\n' + 'Temperature (' + u'\u00B0' + 'C): ' + self.device_temp_entry.get() + \
             '\n' + 'Device Dimensions: ' + self.device_dim_entry.get() + '\n' + \
             'Test Structure or Laser: ' + self.test_laser_button_var.get()
 
-        plt.gcf().text(0.5, 0.1, plotString, fontsize=12)
+        plt.figtext(0.02, 0.02, plotString, fontsize=12)
 
-        plt.tight_layout()
+        plt.subplots_adjust(bottom=0.3)
+
         plt.savefig(self.plot_dir_entry.get() + '/' + filename + ".png")
         plt.show()
 

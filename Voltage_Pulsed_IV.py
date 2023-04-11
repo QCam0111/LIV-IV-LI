@@ -32,8 +32,8 @@ class VPulse_IV():
         # Initialize oscilloscope
         self.scope.write("*RST")
         self.scope.write("*CLS")
-        self.scope.write(":CHANnel%d:IMPedance " + channelImpedance(self.curr_channel_impedance.get()) %self.current_channel.get())
-        self.scope.write(":CHANnel%d:IMPedance " + channelImpedance(self.volt_channel_impedance.get()) %self.voltage_channel.get())
+        self.scope.write(":CHANnel%d:IMPedance %s" %(self.current_channel.get(), channelImpedance(self.curr_channel_impedance.get())))
+        self.scope.write(":CHANnel%d:IMPedance %s" %(self.voltage_channel.get(), channelImpedance(self.volt_channel_impedance.get())))
 
         pulseWidth = float(self.pulse_width_entry.get())
 
@@ -105,15 +105,16 @@ class VPulse_IV():
 
         # Handling glitch points
         prevPulserVoltage = 0
-        V_glitch_1 = 7.13
-        V_glitch_2 = 21.7
+        V_glitch_1 = 7.12
+        V_glitch_2 = 21.6
+        V_glitch_3 = 68
 
         for V_s in voltageSourceValues:
-            if (prevPulserVoltage < V_glitch_1 <= V_s or prevPulserVoltage < V_glitch_2 <= V_s):
+            if ((prevPulserVoltage <= V_glitch_1 < V_s) or (prevPulserVoltage <= V_glitch_2 < V_s) or (prevPulserVoltage <= V_glitch_3 < V_s)):
                 self.pulser.write("output off")
                 self.pulser.write("volt %.3f" %V_s)
                 prevPulserVoltage = V_s
-                sleep(3)
+                sleep(4)
             else:
                 self.pulser.write("VOLT %.3f" % (V_s))
                 self.pulser.write("OUTPut ON")
@@ -171,7 +172,7 @@ class VPulse_IV():
         # open file and write in data
         txtDir = self.txt_dir_entry.get()
         filename = self.device_name_entry.get() + '_VP-IV_' + self.device_temp_entry.get() + \
-            '_' + self.device_dim_entry.get() + '_' + self.test_laser_button_var.get()
+            'C_' + self.device_dim_entry.get() + '_' + self.test_laser_button_var.get()
         filepath = os.path.join(txtDir + '/' + filename + '.txt')
         fd = open(filepath, 'w+')
         i = 1
@@ -189,17 +190,17 @@ class VPulse_IV():
         fig, ax1 = plt.subplots()
         ax1.set_xlabel('Measured device current (mA)')
         ax1.set_ylabel('Measured device voltage (mV)')
-        ax1.plot(currentData, voltageData, color='blue',
-                 label='I-V Characteristic')
+        ax1.plot(currentData, voltageData, color='blue',label='I-V Characteristic')
         ax1.legend(loc='upper left')
 
-        plotString = 'Device Name: ' + self.device_name_entry.get() + '\n' 'Test Type: VP-IV\n' + 'Temperature (' + u'\u00B0' + 'C):' + self.device_temp_entry.get() + \
+        plotString = 'Device Name: ' + self.device_name_entry.get() + '\n' 'Test Type: VP-IV\n' + 'Temperature (' + u'\u00B0' + 'C): ' + self.device_temp_entry.get() + \
             '\n' + 'Device Dimensions: ' + self.device_dim_entry.get() + '\n' + \
             'Test Structure or Laser: ' + self.test_laser_button_var.get()
 
-        plt.gcf().text(0.5, 0.1, plotString, fontsize=12)
+        plt.figtext(0.02, 0.02, plotString, fontsize=12)
 
-        plt.tight_layout()
+        plt.subplots_adjust(bottom=0.3)
+
         plt.savefig(self.plot_dir_entry.get() + '/' + filename + ".png")
         plt.show()
 

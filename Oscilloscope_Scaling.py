@@ -1,3 +1,5 @@
+from Tkinter import StringVar
+
 """
 Function referenced when: The measured oscilloscope signal exceeds 99% of total oscilloscope display.
 Description: Increases the vertical range of the oscilloscope display, measured in mV/division.
@@ -24,9 +26,11 @@ def channelImpedance(selectedImpedance):
     # 1 Megaohm
     onemeg = '1M' + u'\u03A9'
 
-    if selectedImpedance is fifty:
+    impedance = ''
+
+    if (selectedImpedance == fifty):
         impedance = 'FIFTy'
-    elif selectedImpedance is onemeg:
+    elif (selectedImpedance == onemeg):
         impedance = 'ONEMeg'
 
     return impedance

@@ -31,9 +31,9 @@ class VPulse_LI():
         # Initialize oscilloscope
         self.scope.write("*RST")
         self.scope.write("*CLS")
-        self.scope.write(":CHANnel%d:IMPedance " + channelImpedance(self.curr_channel_impedance.get()) %self.current_channel.get())
-        self.scope.write(":CHANnel%d:IMPedance " + channelImpedance(self.light_channel_impedance.get()) %self.light_channel.get())
-        self.scope.write(":CHANnel%d:IMPedance " + channelImpedance(self.volt_channel_impedance.get()) %self.voltage_channel.get())
+        self.scope.write(":CHANnel%d:IMPedance %s" %(self.current_channel.get(), channelImpedance(self.curr_channel_impedance.get())))
+        self.scope.write(":CHANnel%d:IMPedance %s" %(self.light_channel.get(), channelImpedance(self.light_channel_impedance.get())))
+        self.scope.write(":CHANnel%d:IMPedance %s" %(self.voltage_channel.get(), channelImpedance(self.volt_channel_impedance.get())))
 
         pulseWidth = float(self.pulse_width_entry.get())
         # Mulitplication by 10 is due to a peculiarty of this oscilloscope
@@ -110,20 +110,16 @@ class VPulse_LI():
 
         # Handling glitch points
         prevPulserVoltage = 0
-        V_glitch_1 = 7.13
-        V_glitch_2 = 21.7
-
-        # Oscilloscope channel resistance
-        R_osc = 50
+        V_glitch_1 = 7.12
+        V_glitch_2 = 21.6
+        V_glitch_3 = 68
 
         for V_s in voltageSourceValues:
-
-            # Handle glitch issues
-            if (prevPulserVoltage < V_glitch_1 <= V_s or prevPulserVoltage < V_glitch_2 <= V_s):
+            if ((prevPulserVoltage <= V_glitch_1 < V_s) or (prevPulserVoltage <= V_glitch_2 < V_s) or (prevPulserVoltage <= V_glitch_3 < V_s)):
                 self.pulser.write("output off")
                 self.pulser.write("volt %.3f" %V_s)
                 prevPulserVoltage = V_s
-                sleep(3)
+                sleep(4)
             else:
                 self.pulser.write("VOLT %.3f" % (V_s))
                 self.pulser.write("OUTPut ON")
@@ -167,6 +163,11 @@ class VPulse_LI():
                 totalDisplayLight = 6*vertScaleLight
                 totalDisplayVoltage = 6*vertScaleVoltage
 
+                if (self.light_channel_impedance.get() == '50' + u'\u03A9'):
+                    R_osc = 50
+                elif (self.light_channel_impedance.get() == '1M' + u'\u03A9'):
+                    R_osc = 1000000
+
                 current_ampl_device = 2*current_ampl_osc
                 PD_current = light_ampl_osc/R_osc
 
@@ -192,7 +193,7 @@ class VPulse_LI():
         # open file and write in data
         txtDir = self.txt_dir_entry.get()
         filename = self.device_name_entry.get() + '_VP-LI_' + self.device_temp_entry.get() + \
-            '_' + self.device_dim_entry.get() + '_' + self.test_laser_button_var.get()
+            'C_' + self.device_dim_entry.get() + '_' + self.test_laser_button_var.get()
         filepath = os.path.join(txtDir + '/' + filename + '.txt')
         fd = open(filepath, 'w+')
         i = 1
@@ -215,13 +216,14 @@ class VPulse_LI():
                  label='L-I Characteristic')
         ax1.legend(loc='upper left')
 
-        plotString = 'Device Name: ' + self.device_name_entry.get() + '\n' 'Test Type: VP-LI\n' + 'Temperature (' + u'\u00B0' + 'C):' + self.device_temp_entry.get() + \
+        plotString = 'Device Name: ' + self.device_name_entry.get() + '\n' 'Test Type: VP-LI\n' + 'Temperature (' + u'\u00B0' + 'C): ' + self.device_temp_entry.get() + \
             '\n' + 'Device Dimensions: ' + self.device_dim_entry.get() + '\n' + \
             'Test Structure or Laser: ' + self.test_laser_button_var.get()
 
-        plt.gcf().text(0.5, 0.1, plotString, fontsize=12)
+        plt.figtext(0.02, 0.02, plotString, fontsize=12)
 
-        plt.tight_layout()
+        plt.subplots_adjust(bottom=0.3)
+
         plt.savefig(self.plot_dir_entry.get() + '/' + filename + ".png")
         plt.show()
 
