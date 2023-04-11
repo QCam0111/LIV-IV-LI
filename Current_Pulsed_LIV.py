@@ -213,7 +213,7 @@ class IPulse_LIV():
         ax2.plot(currentData, lightData, color='red',label='L-I Characteristic')
 
         plotString = 'Device Name: ' + self.device_name_entry.get() + '\nTest Type: Current Pulsed\n' + 'Temperature (' + u'\u00B0' + 'C): ' + self.device_temp_entry.get() + \
-            '\n' + 'Device Dimensions: ' + self.device_dim_entry.get() + '\n' + \
+            '\n' + 'Device Dimensions: ' + self.device_dim_entry.get() + '(' + u'\u03BC' + 'm x ' + u'\u03BC' + 'm)\n' + \
             'Test Structure or Laser: ' + self.test_laser_button_var.get()
 
         plt.figtext(0.02, 0.02, plotString, fontsize=12)
@@ -326,7 +326,7 @@ class IPulse_LIV():
         self.device_name_entry.grid(column=0, row=1, sticky='W', padx=(3, 0))
 
         # Create label for device dimensions entry box
-        self.device_dim_label = Label(self.devFrame, text='Device dimensions:')
+        self.device_dim_label = Label(self.devFrame, text='Device dimensions ' + '(' + u'\u03BC' + 'm x ' + u'\u03BC' + 'm):')
         self.device_dim_label.grid(column=0, row=2, sticky='W')
         # Device dimensions entry box
         self.device_dim_entry = Entry(self.devFrame, width=15)
