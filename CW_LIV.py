@@ -143,7 +143,7 @@ class CW_LIV():
         ax1.plot(self.current, self.voltage_array, color='blue', label='I-V Characteristic')
         ax2.plot(self.current, self.light, color='red', label='L-I Characteristic')
         
-        plotString = 'Device Name: ' + self.device_name_entry.get() + '\n' 'Test Type: CW-LIV\n' + 'Temperature (' + u'\u00B0' + 'C): ' + self.device_temp_entry.get() + \
+        plotString = 'Device Name: ' + self.device_name_entry.get() + '\nTest Type: CW\n' + 'Temperature (' + u'\u00B0' + 'C): ' + self.device_temp_entry.get() + \
             '\n' + 'Device Dimensions: ' + self.device_dim_entry.get() + '\n' + \
             'Test Structure or Laser: ' + self.test_laser_button_var.get()
 

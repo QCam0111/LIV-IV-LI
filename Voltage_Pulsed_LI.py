@@ -163,10 +163,12 @@ class VPulse_LI():
                 totalDisplayLight = 6*vertScaleLight
                 totalDisplayVoltage = 6*vertScaleVoltage
 
+                R_osc = 50
+
                 if (self.light_channel_impedance.get() == '50' + u'\u03A9'):
                     R_osc = 50
                 elif (self.light_channel_impedance.get() == '1M' + u'\u03A9'):
-                    R_osc = 1000000
+                    R_osc = 1
 
                 current_ampl_device = 2*current_ampl_osc
                 PD_current = light_ampl_osc/R_osc
@@ -216,7 +218,7 @@ class VPulse_LI():
                  label='L-I Characteristic')
         ax1.legend(loc='upper left')
 
-        plotString = 'Device Name: ' + self.device_name_entry.get() + '\n' 'Test Type: VP-LI\n' + 'Temperature (' + u'\u00B0' + 'C): ' + self.device_temp_entry.get() + \
+        plotString = 'Device Name: ' + self.device_name_entry.get() + '\nTest Type: Voltage Pulsed\n' + 'Temperature (' + u'\u00B0' + 'C): ' + self.device_temp_entry.get() + \
             '\n' + 'Device Dimensions: ' + self.device_dim_entry.get() + '\n' + \
             'Test Structure or Laser: ' + self.test_laser_button_var.get()
 

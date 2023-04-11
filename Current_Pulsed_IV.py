@@ -194,7 +194,7 @@ class IPulse_IV():
         ax1.plot(currentData, voltageData, color='blue', label='Current Pulsed I-V Characteristic')
         ax1.legend(loc='upper left')
 
-        plotString = 'Device Name: ' + self.device_name_entry.get() + '\n' 'Test Type: CP-IV\n' + 'Temperature (' + u'\u00B0' + 'C): ' + self.device_temp_entry.get() + \
+        plotString = 'Device Name: ' + self.device_name_entry.get() + '\nTest Type: Current Pulsed\n' + 'Temperature (' + u'\u00B0' + 'C): ' + self.device_temp_entry.get() + \
             '\n' + 'Device Dimensions: ' + self.device_dim_entry.get() + '\n' + \
             'Test Structure or Laser: ' + self.test_laser_button_var.get()
 
