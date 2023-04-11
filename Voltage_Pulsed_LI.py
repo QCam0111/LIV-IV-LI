@@ -111,20 +111,16 @@ class VPulse_LI():
 
         # Handling glitch points
         prevPulserVoltage = 0
-        V_glitch_1 = 7.13
-        V_glitch_2 = 21.7
-
-        # Oscilloscope channel resistance
-        R_osc = 50
+        V_glitch_1 = 7.12
+        V_glitch_2 = 21.6
+        V_glitch_3 = 68
 
         for V_s in voltageSourceValues:
-
-            # Handle glitch issues
-            if (prevPulserVoltage < V_glitch_1 <= V_s or prevPulserVoltage < V_glitch_2 <= V_s):
+            if ((prevPulserVoltage <= V_glitch_1 < V_s) or (prevPulserVoltage <= V_glitch_2 < V_s) or (prevPulserVoltage <= V_glitch_3 < V_s)):
                 self.pulser.write("output off")
                 self.pulser.write("volt %.3f" %V_s)
                 prevPulserVoltage = V_s
-                sleep(3)
+                sleep(4)
             else:
                 self.pulser.write("VOLT %.3f" % (V_s))
                 self.pulser.write("OUTPut ON")
