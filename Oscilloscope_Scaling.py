@@ -11,3 +11,22 @@ def incrOscVertScale(currentScale):
     scaleIndex = scaleIndex + 1
     newScale = scaleValues[scaleIndex]
     return newScale
+
+"""
+Function referenced when: Setting the impedance an oscilloscope channel.
+Description: Sets the channel impedance to either 50-ohm or 1-Megaohm.
+"""
+
+def channelImpedance(selectedImpedance):
+    
+    # 50 Ohm
+    fifty = '50' + u'\u03A9'
+    # 1 Megaohm
+    onemeg = '1M' + u'\u03A9'
+
+    if selectedImpedance is fifty:
+        impedance = 'FIFTy'
+    elif selectedImpedance is onemeg:
+        impedance = 'ONEMeg'
+
+    return impedance

@@ -10,7 +10,7 @@ from Tkinter import Label, Entry, Button, LabelFrame, OptionMenu, StringVar, Int
 # Import Browse button functions
 from Browse_buttons import browse_plot_file, browse_txt_file
 # Import Oscilloscope scaling
-from Oscilloscope_Scaling import incrOscVertScale
+from Oscilloscope_Scaling import incrOscVertScale, channelImpedance
 # Import trigger updating
 from Update_Trigger import updateTriggerCursor
 
@@ -28,10 +28,8 @@ class IPulse_LI():
         # Initialize oscilloscope
         self.scope.write("*RST")
         self.scope.write("*CLS")
-        self.scope.write(":CHANnel%d:IMPedance FIFTy" %
-                         self.current_channel.get())
-        self.scope.write(":CHANnel%d:IMPedance FIFTy" %
-                         self.light_channel.get())
+        self.scope.write(":CHANnel%d:IMPedance " + channelImpedance(self.curr_channel_impedance.get()) %self.current_channel.get())
+        self.scope.write(":CHANnel%d:IMPedance " + channelImpedance(self.light_channel_impedance.get()) %self.light_channel.get())
         self.scope.write(":TIMebase:RANGe 2E-6")
         self.scope.write(":TRIGger:MODE EDGE")
         self.scope.write(":TRIGger:EDGE:SOURce CHANnel%d" %self.trigger_channel.get())
@@ -168,8 +166,9 @@ class IPulse_LI():
 
         # open file and write in data
         txtDir = self.txt_dir_entry.get()
-        name = self.file_name_entry.get()
-        filepath = os.path.join(txtDir + '/' + name + '.txt')
+        filename = self.device_name_entry.get() + '_CP-LI_' + self.device_temp_entry.get() + \
+            '_' + self.device_dim_entry.get() + '_' + self.test_laser_button_var.get()
+        filepath = os.path.join(txtDir + '/' + filename + '.txt')
         fd = open(filepath, 'w+')
         i = 1
 
@@ -190,8 +189,14 @@ class IPulse_LI():
                  label='L-I Characteristic')
         ax1.legend(loc='upper left')
 
+        plotString = 'Device Name: ' + self.device_name_entry.get() + '\n' 'Test Type: CP-LI\n' + 'Temperature (' + u'\u00B0' + 'C):' + self.device_temp_entry.get() + \
+            '\n' + 'Device Dimensions: ' + self.device_dim_entry.get() + '\n' + \
+            'Test Structure or Laser: ' + self.test_laser_button_var.get()
+
+        plt.gcf().text(0.5, 0.1, plotString, fontsize=12)
+
         plt.tight_layout()
-        plt.savefig(self.plot_dir_entry.get() + '/' + self.file_name_entry.get() + ".png")
+        plt.savefig(self.plot_dir_entry.get() + '/' + filename + ".png")
         plt.show()
 
         try:

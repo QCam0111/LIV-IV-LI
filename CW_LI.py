@@ -9,8 +9,8 @@ from Tkinter import Label, Entry, Button, LabelFrame, OptionMenu, Radiobutton, S
 
 # Import Browse button functions
 from Browse_buttons import browse_plot_file, browse_txt_file
-# Import Oscilloscope scaling
-from Oscilloscope_Scaling import incrOscVertScale
+# Import Oscilloscope scaling and impedance settings
+from Oscilloscope_Scaling import incrOscVertScale, channelImpedance
 
 rm = pyvisa.ResourceManager()
 
@@ -45,7 +45,7 @@ class CW_LI():
         # Initialize oscilloscope
         self.scope.write("*RST")
         self.scope.write("*CLS")
-        self.scope.write(":CHANnel%d:IMPedance FIFTy" %self.light_channel.get())
+        self.scope.write(":CHANnel%d:IMPedance " + channelImpedance(self.channel_impedance.get()) %self.light_channel.get())
         self.scope.write(":TIMebase:RANGe 2E-6")
 
         # Channel scales - set each channel to 1mV/div to start
@@ -113,8 +113,9 @@ class CW_LI():
 
         # open file and write in data
         txtDir = self.txt_dir_entry.get()
-        name = self.file_name_entry.get()
-        filepath = os.path.join(txtDir + '/' + name + '.txt')
+        filename = self.device_name_entry.get() + '_CW-LI_' + self.device_temp_entry.get() + \
+            '_' + self.device_dim_entry.get() + '_' + self.test_laser_button_var.get()
+        filepath = os.path.join(txtDir + '/' + filename + '.txt')
         fd = open(filepath, 'w+')
         i = 1
 
@@ -134,8 +135,14 @@ class CW_LI():
         ax1.plot(self.current, self.light, color='blue', label='L-I Characteristic')
         ax1.legend(loc='upper left')
 
+        plotString = 'Device Name: ' + self.device_name_entry.get() + '\n' 'Test Type: CW-LI\n' + 'Temperature (' + u'\u00B0' + 'C):' + self.device_temp_entry.get() + \
+            '\n' + 'Device Dimensions: ' + self.device_dim_entry.get() + '\n' + \
+            'Test Structure or Laser: ' + self.test_laser_button_var.get()
+
+        plt.gcf().text(0.5, 0.1, plotString, fontsize=12)
+
         plt.tight_layout()
-        plt.savefig(self.plot_dir_entry.get() + '/' + self.file_name_entry.get() + ".png")
+        plt.savefig(self.plot_dir_entry.get() + '/' + filename + ".png")
         plt.show()
 
         try:
