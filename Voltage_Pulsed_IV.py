@@ -194,7 +194,7 @@ class VPulse_IV():
         ax1.legend(loc='upper left')
 
         plotString = 'Device Name: ' + self.device_name_entry.get() + '\nTest Type: Voltage Pulsed\n' + 'Temperature (' + u'\u00B0' + 'C): ' + self.device_temp_entry.get() + \
-            '\n' + 'Device Dimensions: ' + self.device_dim_entry.get() + '(' + u'\u03BC' + 'm x ' + u'\u03BC' + 'm)\n' + \
+            '\n' + 'Device Dimensions: ' + self.device_dim_entry.get() + ' (' + u'\u03BC' + 'm x ' + u'\u03BC' + 'm)\n' + \
             'Test Structure or Laser: ' + self.test_laser_button_var.get()
 
         plt.figtext(0.02, 0.02, plotString, fontsize=12)
