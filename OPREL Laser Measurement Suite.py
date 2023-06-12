@@ -3,15 +3,9 @@ from Tkinter import Label, Button, Radiobutton, Toplevel, StringVar
 import tkMessageBox as messagebox
 
 # Import measurement files
-from CW_LIV import CW_LIV
-from CW_IV import CW_IV
-from CW_LI import CW_LI
-from Voltage_Pulsed_LIV import VPulse_LIV
-from Voltage_Pulsed_IV import VPulse_IV
-from Voltage_Pulsed_LI import VPulse_LI
-from Current_Pulsed_LIV import IPulse_LIV
-from Current_Pulsed_IV import IPulse_IV
-from Current_Pulsed_LI import IPulse_LI
+from CW_LIV import CW_LI, CW_IV, CW_LIV
+from Voltage_Pulsed_LIV import VPulse_LI, VPulse_IV, VPulse_LIV
+from Current_Pulsed_LIV import IPulse_LI, IPulse_IV, IPulse_LIV
 
 class MeasSelect():
 
